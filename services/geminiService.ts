@@ -1,39 +1,42 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
-if (!process.env.API_KEY) {
-  // In this environment, we assume the API key is provided.
-  // A real-world application should handle this more gracefully.
-  console.warn("API_KEY environment variable not found. App may not function correctly.");
-}
-
-// FIX: Initialize GoogleGenAI directly with process.env.API_KEY as per guidelines.
+// FIX: Initialize GoogleGenAI with the apiKey in an object.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-const model = "gemini-2.5-flash";
 
-const systemInstruction = `You are an expert in prompt engineering.
-Your task is to take a user's prompt and improve it.
-Make it more specific, clear, and effective for generating the best possible response from an AI model.
-Return only the improved prompt, without any additional text, explanation, or markdown formatting.
-Just the raw, improved text.`;
+const systemInstruction = `You are an expert in prompt engineering. Your task is to refine a user's initial prompt to make it more effective for a generative AI model.
+When you receive a prompt, analyze it and rewrite it to be clearer, more specific, and better structured.
+The refined prompt should:
+- Have a clear and specific goal.
+- Provide sufficient context.
+- Specify the desired format for the output.
+- Include constraints to guide the AI's response.
+- Use clear and direct language.
+Return ONLY the refined prompt, without any explanations or conversational text.`;
 
-export async function* improvePromptStream(prompt: string): AsyncGenerator<string> {
+export async function* streamRefinePrompt(originalPrompt: string): AsyncGenerator<string> {
+  if (!originalPrompt.trim()) {
+    return;
+  }
+
   try {
-    const result = await ai.models.generateContentStream({
-      model: model,
-      contents: prompt,
-      config: {
+    // FIX: Use ai.models.generateContentStream instead of a deprecated method.
+    const response = await ai.models.generateContentStream({
+        // FIX: Use a recommended model 'gemini-2.5-flash'.
+        model: "gemini-2.5-flash",
+        // FIX: Use 'contents' property for the prompt.
+        contents: originalPrompt,
+        // FIX: Add systemInstruction to the 'config' object.
+        config: {
           systemInstruction: systemInstruction,
-      }
+        },
     });
 
-    for await (const chunk of result) {
-      // It's possible for a chunk to have no text, so we guard against that.
-      if (chunk.text) {
-        yield chunk.text;
-      }
+    for await (const chunk of response) {
+      // FIX: Access the generated text directly from the .text property of the chunk.
+      yield chunk.text;
     }
   } catch (error) {
-    console.error("Error generating content:", error);
-    throw new Error("Failed to get response from Gemini API. Please check your API key and network connection.");
+    console.error("Error streaming refined prompt:", error);
+    throw new Error("Failed to connect to the generative AI service. Please check your API key and network connection.");
   }
 }

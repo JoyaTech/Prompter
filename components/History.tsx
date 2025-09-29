@@ -1,69 +1,51 @@
 import React from 'react';
-import { SavedPrompt } from '../types';
-import { HistoryIcon, TrashIcon } from './icons';
+import { HistoryItem } from '../types';
+import { TrashIcon } from './icons';
 
 interface HistoryProps {
-  prompts: SavedPrompt[];
-  onUse: (prompt: SavedPrompt) => void;
-  onDelete: (id: string) => void;
-  onClear: () => void;
+  history: HistoryItem[];
+  onSelectHistory: (prompt: string, response: string) => void;
+  onDeleteHistory: (id: string) => void;
 }
 
-function History({ prompts, onUse, onDelete, onClear }: HistoryProps): React.ReactElement {
-  return (
-    <div className="mt-12">
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-            <HistoryIcon className="w-7 h-7 text-indigo-400"/>
-            <h2 className="text-3xl font-bold text-gray-200">History</h2>
-        </div>
-        {prompts.length > 0 && (
-            <button
-                onClick={onClear}
-                className="bg-red-900/50 text-red-400 px-3 py-1.5 rounded-md text-sm hover:bg-red-900/80 transition-colors flex items-center gap-2"
-            >
-                <TrashIcon className="w-4 h-4"/>
-                Clear History
-            </button>
-        )}
-      </div>
+// FIX: Implement the History component to resolve placeholder content errors.
+const History: React.FC<HistoryProps> = ({ history, onSelectHistory, onDeleteHistory }) => {
+  if (history.length === 0) {
+    return null; // Don't render anything if history is empty
+  }
 
-      {prompts.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800/50 border border-gray-700 rounded-lg">
-          <p className="text-gray-500">Your prompt history is empty.</p>
-          <p className="text-gray-500 text-sm">Improve a prompt to start your history.</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {prompts.map((prompt) => (
-            <div key={prompt.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-400 text-xs mb-1">Original</p>
-                <p className="text-gray-300 truncate text-sm">{prompt.original}</p>
-                 <p className="text-gray-400 text-xs mt-2 mb-1">Improved</p>
-                <p className="text-gray-200 truncate font-medium text-sm">{prompt.improved}</p>
-              </div>
-              <div className="flex items-center flex-shrink-0 gap-2">
-                <button
-                  onClick={() => onUse(prompt)}
-                  className="bg-gray-700 text-gray-300 px-3 py-1.5 rounded-md text-sm hover:bg-gray-600 transition-colors"
-                >
-                  Use
-                </button>
-                <button
-                  onClick={() => onDelete(prompt.id)}
-                  aria-label="Delete from history"
-                  className="bg-red-900/50 text-red-400 p-2 rounded-md hover:bg-red-900/80 transition-colors"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-gray-300">History</h3>
+      <div className="max-h-60 overflow-y-auto pr-2">
+        <ul className="space-y-2">
+          {history.map((item) => (
+            <li
+              key={item.id}
+              className="group bg-gray-800/50 p-3 rounded-md flex justify-between items-center transition-colors hover:bg-gray-700/70"
+            >
+              <button
+                onClick={() => onSelectHistory(item.prompt, item.response)}
+                className="text-left flex-grow overflow-hidden"
+              >
+                <p className="text-gray-300 truncate" title={item.prompt}>{item.prompt}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {item.timestamp.toLocaleTimeString()}
+                </p>
+              </button>
+              <button
+                onClick={() => onDeleteHistory(item.id)}
+                className="ml-4 p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Delete history item"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            </li>
           ))}
-        </div>
-      )}
+        </ul>
+      </div>
     </div>
   );
-}
+};
 
 export default History;

@@ -1,13 +1,21 @@
-export enum Status {
-  IDLE = 'IDLE',
-  LOADING = 'LOADING',
-  SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
+// FIX: Add type definitions to resolve placeholder content errors.
+export interface Prompt {
+  id: string;
+  name: string;
+  text: string;
 }
 
-export interface SavedPrompt {
+export interface HistoryItem {
   id: string;
-  original: string;
-  improved: string;
-  timestamp: number;
+  prompt: string;
+  response: string;
+  timestamp: Date;
+}
+
+export enum AppState {
+  IDLE = 'IDLE',
+  LOADING = 'LOADING',
+  STREAMING = 'STREAMING',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR',
 }

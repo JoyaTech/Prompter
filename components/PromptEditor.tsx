@@ -1,98 +1,82 @@
-import React from 'react';
-import { Status } from '../types';
-import CopyButton from './CopyButton';
-import { SaveIcon } from './icons';
+import React, { useState, useEffect } from 'react';
+import { WandIcon, SaveIcon, CheckIcon } from './icons';
+import { AppState } from '../types';
 
 interface PromptEditorProps {
-  originalPrompt: string;
-  setOriginalPrompt: (prompt: string) => void;
-  improvedPrompt: string;
-  status: Status;
-  error: string | null;
-  handleSubmit: () => void;
-  handleSave: () => void;
-  handleReset: () => void;
+  onPromptSubmit: (prompt: string) => void;
+  onSavePrompt: (name: string, text: string) => void;
+  appState: AppState;
 }
 
-export default function PromptEditor({
-  originalPrompt,
-  setOriginalPrompt,
-  improvedPrompt,
-  status,
-  error,
-  handleSubmit,
-  handleSave,
-  handleReset,
-}: PromptEditorProps): React.ReactElement {
-  const isLoading = status === Status.LOADING;
-  const isSuccess = status === Status.SUCCESS;
+const PromptEditor: React.FC<PromptEditorProps> = ({ onPromptSubmit, onSavePrompt, appState }) => {
+  const [prompt, setPrompt] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
+  const [tokenCount, setTokenCount] = useState(0);
+  const isLoading = appState === AppState.LOADING || appState === AppState.STREAMING;
+
+  useEffect(() => {
+    // A simple approximation: 1 token ~ 4 characters
+    const count = prompt.trim() ? Math.ceil(prompt.length / 4) : 0;
+    setTokenCount(count);
+  }, [prompt]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (prompt.trim()) {
+      onPromptSubmit(prompt);
+    }
+  };
+
+  const handleSave = () => {
+    if(prompt.trim()) {
+      const name = prompt.split(' ').slice(0, 5).join(' ') + (prompt.split(' ').length > 5 ? '...' : '');
+      onSavePrompt(name, prompt);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Original Prompt Section */}
-      <div className="flex flex-col gap-4">
-        <label htmlFor="original-prompt" className="text-xl font-semibold text-gray-200">
-          Your Prompt
-        </label>
+    <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="relative">
         <textarea
-          id="original-prompt"
-          value={originalPrompt}
-          onChange={(e) => setOriginalPrompt(e.target.value)}
-          placeholder="e.g., Write a short story about a robot who discovers music."
-          className="flex-grow p-4 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors text-gray-300 resize-none min-h-[200px]"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Enter your prompt here... e.g., 'A cat on a skateboard'"
+          className="w-full h-40 p-4 pr-24 bg-gray-900/50 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none transition-colors"
           disabled={isLoading}
         />
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleSubmit}
-            disabled={!originalPrompt.trim() || isLoading}
-            className="w-full px-6 py-3 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'Improving...' : 'Improve Prompt'}
-          </button>
-          <button
-            onClick={handleReset}
-            disabled={isLoading && !isSuccess}
-            className="px-6 py-3 font-semibold text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
-          >
-            Reset
-          </button>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2">
+            {isSaved && (
+              <span className="text-sm text-green-400 flex items-center gap-1">
+                <CheckIcon className="w-4 h-4" />
+                Prompt Saved!
+              </span>
+            )}
+            <button
+                type="button"
+                onClick={handleSave}
+                className="p-2 bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Save Prompt"
+                disabled={isLoading || !prompt.trim()}
+            >
+                <SaveIcon className="w-5 h-5" />
+            </button>
+            <button
+                type="submit"
+                className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-wait transition-colors"
+                title="Perfect Prompt"
+                disabled={isLoading}
+            >
+                <WandIcon className="w-5 h-5" />
+            </button>
         </div>
-      </div>
-
-      {/* Improved Prompt Section */}
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-200">Improved Prompt</h2>
-          {isSuccess && improvedPrompt && (
-            <div className="flex gap-2">
-                <CopyButton textToCopy={improvedPrompt} />
-                <button 
-                  onClick={handleSave}
-                  className="px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 bg-gray-700 text-gray-300 hover:bg-gray-600"
-                >
-                  <SaveIcon className="w-4 h-4" />
-                  Save
-                </button>
-            </div>
-          )}
-        </div>
-        <div className="relative flex-grow">
-          <textarea
-            id="improved-prompt"
-            value={improvedPrompt}
-            readOnly
-            placeholder="The improved prompt will appear here..."
-            className="w-full h-full p-4 bg-gray-900/50 border border-gray-700 rounded-lg text-gray-200 resize-none min-h-[200px]"
-          />
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-lg">
-                <div className="w-8 h-8 border-4 border-t-indigo-500 border-gray-700 rounded-full animate-spin"></div>
-            </div>
-          )}
-        </div>
-        {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+      </form>
+      <div className="text-right text-xs text-gray-500 pr-1">
+        Estimated Tokens: {tokenCount}
       </div>
     </div>
   );
-}
+};
+
+export default PromptEditor;
