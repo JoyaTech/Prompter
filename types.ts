@@ -1,6 +1,18 @@
-// FIX: Defined the necessary types for the application based on their usage in other components.
+// FIX: Added TemplateFields for the Visual Builder, and updated HistoryItem.
 export type Language = 'en' | 'he';
 export type Page = 'editor' | 'dashboard';
+
+// חדש: סוגי מודלים וכלי יעד
+export type TargetModel = 'Generic-LLM' | 'Gemini-Ultra' | 'Code-Interpreter' | 'Imagen';
+export type Mode = 'quick' | 'deep';
+
+// חדש: מבנה נתונים עבור Template Builder
+export interface TemplateFields {
+  role: string;
+  task: string;
+  context: string;
+  constraints: string;
+}
 
 export interface Prompt {
   id: string;
@@ -15,4 +27,5 @@ export interface HistoryItem {
   timestamp: Date;
   alignment_notes: string | null;
   topics: string[];
+  // test_results?: any; // שמור לשלב 4 (Prompt Unit Tester)
 }
