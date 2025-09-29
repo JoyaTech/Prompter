@@ -2,26 +2,23 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import PromptEditor from './components/PromptEditor';
 import OutputDisplay from './components/OutputDisplay';
+import { refinePrompt } from './services/geminiService';
+import { HistoryItem, Prompt } from './types';
 import SavedPrompts from './components/SavedPrompts';
 import History from './components/History';
-import { streamRefinePrompt } from './services/geminiService';
-import { Prompt, HistoryItem, AppState } from './types';
 
-// FIX: Implement the App component to resolve placeholder content errors and build the application UI.
 function App() {
-  const [output, setOutput] = useState('');
+  const [originalPrompt, setOriginalPrompt] = useState('');
+  const [refinedPrompt, setRefinedPrompt] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [appState, setAppState] = useState<AppState>(AppState.IDLE);
-  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
+  const [mode, setMode] = useState<'quick' | 'deep'>('quick');
+  
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
 
-  // Load data from localStorage on mount
   useEffect(() => {
     try {
-      const storedPrompts = localStorage.getItem('savedPrompts');
-      if (storedPrompts) {
-        setSavedPrompts(JSON.parse(storedPrompts));
-      }
       const storedHistory = localStorage.getItem('promptHistory');
       if (storedHistory) {
         const parsedHistory = JSON.parse(storedHistory).map((item: any) => ({
@@ -30,21 +27,15 @@ function App() {
         }));
         setHistory(parsedHistory);
       }
+      const storedPrompts = localStorage.getItem('savedPrompts');
+      if (storedPrompts) {
+        setSavedPrompts(JSON.parse(storedPrompts));
+      }
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
     }
   }, []);
 
-  // Save prompts to localStorage on change
-  useEffect(() => {
-    try {
-      localStorage.setItem('savedPrompts', JSON.stringify(savedPrompts));
-    } catch (e) {
-      console.error("Failed to save prompts to localStorage", e);
-    }
-  }, [savedPrompts]);
-
-  // Save history to localStorage on change
   useEffect(() => {
     try {
       localStorage.setItem('promptHistory', JSON.stringify(history));
@@ -53,83 +44,111 @@ function App() {
     }
   }, [history]);
 
-  const handlePromptSubmit = async (prompt: string) => {
-    setAppState(AppState.LOADING);
-    setOutput('');
+  useEffect(() => {
+    try {
+      localStorage.setItem('savedPrompts', JSON.stringify(savedPrompts));
+    } catch(e) {
+      console.error("Failed to save prompts to localStorage", e);
+    }
+  }, [savedPrompts]);
+
+  const handleRefine = async (promptToRefine: string) => {
+    setIsLoading(true);
     setError(null);
-    let fullResponse = '';
+    setRefinedPrompt('');
 
     try {
-      setAppState(AppState.STREAMING);
-      for await (const chunk of streamRefinePrompt(prompt)) {
-        fullResponse += chunk;
-        setOutput(fullResponse);
-      }
-      
+      const result = await refinePrompt(promptToRefine, mode);
+      setRefinedPrompt(result);
       const newHistoryItem: HistoryItem = {
-        id: crypto.randomUUID(),
-        prompt: prompt,
-        response: fullResponse,
+        id: new Date().toISOString(),
+        prompt: promptToRefine,
+        response: result,
         timestamp: new Date(),
       };
-      setHistory(prev => [newHistoryItem, ...prev.slice(0, 19)]); // Keep last 20 items
-      
-      setAppState(AppState.SUCCESS);
-
+      // Keep history to a max of 10 items
+      setHistory([newHistoryItem, ...history].slice(0, 10));
     } catch (err: any) {
-      setError(err.message || 'An unknown error occurred.');
-      setAppState(AppState.ERROR);
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSavePrompt = (name: string, text: string) => {
-    const newPrompt: Prompt = { id: crypto.randomUUID(), name, text };
-    setSavedPrompts(prev => [newPrompt, ...prev]);
-  };
-  
-  const handleDeletePrompt = (id: string) => {
-    setSavedPrompts(prev => prev.filter(p => p.id !== id));
+  const handleSavePrompt = () => {
+    if (!refinedPrompt) return;
+    const name = prompt('Enter a name for this prompt:') || `Saved Prompt ${savedPrompts.length + 1}`;
+    if (name) {
+      const newPrompt: Prompt = {
+        id: new Date().toISOString(),
+        name,
+        text: refinedPrompt,
+      };
+      setSavedPrompts([newPrompt, ...savedPrompts]);
+    }
   };
 
-  const handleDeleteHistory = (id: string) => {
-    setHistory(prev => prev.filter(h => h.id !== id));
-  }
+  const handleDeletePrompt = (id: string) => {
+    setSavedPrompts(savedPrompts.filter(p => p.id !== id));
+  };
+
+  const handleSelectPrompt = (promptText: string) => {
+    setRefinedPrompt(promptText);
+    setOriginalPrompt(''); 
+  };
   
+  const handleDeleteHistory = (id: string) => {
+    setHistory(history.filter(h => h.id !== id));
+  };
+
   const handleSelectHistory = (prompt: string, response: string) => {
-      setOutput(response);
-  }
+    setOriginalPrompt(prompt);
+    setRefinedPrompt(response);
+  };
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white font-sans p-4 sm:p-6 md:p-10">
+    <div className="bg-gray-900 min-h-screen text-white font-sans p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         <Header />
-        <main className="space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-200">Your Prompt</h2>
+        <main className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          <div className="md:col-span-2 space-y-8">
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-200">1. Your Idea</h2>
               <PromptEditor 
-                onPromptSubmit={handlePromptSubmit} 
-                onSavePrompt={handleSavePrompt} 
-                appState={appState} 
+                onSubmit={handleRefine}
+                isLoading={isLoading}
+                prompt={originalPrompt}
+                setPrompt={setOriginalPrompt}
+                mode={mode}
+                setMode={setMode}
               />
-            </div>
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-200">Perfected Prompt</h2>
-              <OutputDisplay output={output} appState={appState} error={error} />
-            </div>
+            </section>
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-200">2. Refined Prompt</h2>
+              <OutputDisplay 
+                refinedPrompt={refinedPrompt}
+                isLoading={isLoading}
+                error={error}
+                onSave={handleSavePrompt}
+              />
+            </section>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <SavedPrompts
-              prompts={savedPrompts}
-              onSelectPrompt={handlePromptSubmit}
-              onDeletePrompt={handleDeletePrompt}
-            />
-            <History 
-              history={history}
-              onSelectHistory={handleSelectHistory}
-              onDeleteHistory={handleDeleteHistory}
-            />
-          </div>
+          <aside className="space-y-8">
+            <section>
+              <SavedPrompts
+                prompts={savedPrompts}
+                onSelectPrompt={handleSelectPrompt}
+                onDeletePrompt={handleDeletePrompt}
+              />
+            </section>
+            <section>
+               <History 
+                history={history}
+                onSelectHistory={handleSelectHistory}
+                onDeleteHistory={handleDeleteHistory}
+               />
+            </section>
+          </aside>
         </main>
       </div>
     </div>

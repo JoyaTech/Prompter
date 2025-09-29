@@ -1,81 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { WandIcon, SaveIcon, CheckIcon } from './icons';
-import { AppState } from '../types';
+import React from 'react';
+import { WandIcon } from './icons';
 
 interface PromptEditorProps {
-  onPromptSubmit: (prompt: string) => void;
-  onSavePrompt: (name: string, text: string) => void;
-  appState: AppState;
+  onSubmit: (prompt: string) => void;
+  isLoading: boolean;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  mode: 'quick' | 'deep';
+  setMode: (mode: 'quick' | 'deep') => void;
 }
 
-const PromptEditor: React.FC<PromptEditorProps> = ({ onPromptSubmit, onSavePrompt, appState }) => {
-  const [prompt, setPrompt] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-  const [tokenCount, setTokenCount] = useState(0);
-  const isLoading = appState === AppState.LOADING || appState === AppState.STREAMING;
-
-  useEffect(() => {
-    // A simple approximation: 1 token ~ 4 characters
-    const count = prompt.trim() ? Math.ceil(prompt.length / 4) : 0;
-    setTokenCount(count);
-  }, [prompt]);
+const PromptEditor: React.FC<PromptEditorProps> = ({ onSubmit, isLoading, prompt, setPrompt, mode, setMode }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim()) {
-      onPromptSubmit(prompt);
-    }
+    onSubmit(prompt);
   };
 
-  const handleSave = () => {
-    if(prompt.trim()) {
-      const name = prompt.split(' ').slice(0, 5).join(' ') + (prompt.split(' ').length > 5 ? '...' : '');
-      onSavePrompt(name, prompt);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
-    }
-  }
+  const estimatedTokens = Math.ceil(prompt.length / 4);
 
   return (
-    <div className="space-y-2">
-      <form onSubmit={handleSubmit} className="relative">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="relative">
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter your prompt here... e.g., 'A cat on a skateboard'"
-          className="w-full h-40 p-4 pr-24 bg-gray-900/50 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none transition-colors"
+          placeholder="Enter your initial prompt idea here..."
+          className="w-full h-32 p-4 pr-12 bg-gray-800/50 border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-colors text-gray-200 resize-none"
           disabled={isLoading}
         />
-        <div className="absolute bottom-4 right-4 flex items-center gap-2">
-            {isSaved && (
-              <span className="text-sm text-green-400 flex items-center gap-1">
-                <CheckIcon className="w-4 h-4" />
-                Prompt Saved!
-              </span>
-            )}
+      </div>
+      <div className="flex justify-between items-center">
+        <p className="text-xs text-gray-500">
+            {prompt.trim().length > 0 && `Est. Tokens: ${estimatedTokens}`}
+        </p>
+
+        <div className="flex items-center gap-4">
+            <div className="flex rounded-md bg-gray-700 p-0.5">
+                <button
+                    type="button"
+                    onClick={() => setMode('quick')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${mode === 'quick' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-600'}`}
+                >
+                    Quick
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setMode('deep')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${mode === 'deep' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-600'}`}
+                >
+                    Deep
+                </button>
+            </div>
+        
             <button
-                type="button"
-                onClick={handleSave}
-                className="p-2 bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Save Prompt"
-                disabled={isLoading || !prompt.trim()}
+              type="submit"
+              disabled={isLoading || !prompt.trim()}
+              className="inline-flex items-center gap-2 px-6 py-2.5 font-semibold text-white bg-indigo-600 rounded-md shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-                <SaveIcon className="w-5 h-5" />
-            </button>
-            <button
-                type="submit"
-                className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-wait transition-colors"
-                title="Perfect Prompt"
-                disabled={isLoading}
-            >
-                <WandIcon className="w-5 h-5" />
+              <WandIcon className="w-5 h-5" />
+              {isLoading ? 'Refining...' : 'Refine Prompt'}
             </button>
         </div>
-      </form>
-      <div className="text-right text-xs text-gray-500 pr-1">
-        Estimated Tokens: {tokenCount}
       </div>
-    </div>
+    </form>
   );
 };
 

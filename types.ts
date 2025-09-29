@@ -1,4 +1,4 @@
-// FIX: Add type definitions to resolve placeholder content errors.
+// FIX: Define and export Prompt and HistoryItem types to resolve module errors.
 export interface Prompt {
   id: string;
   name: string;
@@ -10,12 +10,4 @@ export interface HistoryItem {
   prompt: string;
   response: string;
   timestamp: Date;
-}
-
-export enum AppState {
-  IDLE = 'IDLE',
-  LOADING = 'LOADING',
-  STREAMING = 'STREAMING',
-  SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
 }

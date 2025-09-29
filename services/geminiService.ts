@@ -1,42 +1,53 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
-// FIX: Initialize GoogleGenAI with the apiKey in an object.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+if (!process.env.API_KEY) {
+  throw new Error("API_KEY environment variable is not set.");
+}
 
-const systemInstruction = `You are an expert in prompt engineering. Your task is to refine a user's initial prompt to make it more effective for a generative AI model.
-When you receive a prompt, analyze it and rewrite it to be clearer, more specific, and better structured.
-The refined prompt should:
-- Have a clear and specific goal.
-- Provide sufficient context.
-- Specify the desired format for the output.
-- Include constraints to guide the AI's response.
-- Use clear and direct language.
-Return ONLY the refined prompt, without any explanations or conversational text.`;
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export async function* streamRefinePrompt(originalPrompt: string): AsyncGenerator<string> {
+/**
+ * Refines a user-provided prompt using the Gemini AI model.
+ * @param originalPrompt The initial prompt from the user.
+ * @param mode The refinement mode, either 'quick' or 'deep'.
+ * @returns A promise that resolves to the refined prompt as a string.
+ */
+export async function refinePrompt(originalPrompt: string, mode: 'quick' | 'deep'): Promise<string> {
   if (!originalPrompt.trim()) {
-    return;
+    throw new Error("Prompt cannot be empty.");
   }
 
   try {
-    // FIX: Use ai.models.generateContentStream instead of a deprecated method.
-    const response = await ai.models.generateContentStream({
-        // FIX: Use a recommended model 'gemini-2.5-flash'.
-        model: "gemini-2.5-flash",
-        // FIX: Use 'contents' property for the prompt.
-        contents: originalPrompt,
-        // FIX: Add systemInstruction to the 'config' object.
-        config: {
-          systemInstruction: systemInstruction,
-        },
+    const systemInstruction = `You are an expert in prompt engineering. Your task is to refine the user's input into a more powerful, precise, and effective prompt for a generative AI model.
+You will be given a mode: 'Quick' or 'Deep'.
+- If 'Quick Mode' is selected, the prompt should be concise and direct.
+- If 'Deep Mode' is selected, the prompt should be more detailed, structured, and include safeguards (e.g., specifying output format, error handling).
+Focus on clarity, specificity, and providing context. The output must be only the refined prompt, without any additional explanations, introductions, or pleasantries.
+Do not wrap the output in quotes or code blocks.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}.\nRefine this prompt: "${originalPrompt}"`,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+        topP: 1,
+        topK: 32,
+      },
     });
 
-    for await (const chunk of response) {
-      // FIX: Access the generated text directly from the .text property of the chunk.
-      yield chunk.text;
+    const refinedText = response.text;
+    
+    if (!refinedText) {
+        throw new Error("Received an empty response from the AI.");
     }
+    
+    return refinedText.trim();
   } catch (error) {
-    console.error("Error streaming refined prompt:", error);
-    throw new Error("Failed to connect to the generative AI service. Please check your API key and network connection.");
+    console.error("Error refining prompt:", error);
+    if (error instanceof Error) {
+        throw new Error(`Failed to communicate with the AI model: ${error.message}`);
+    }
+    throw new Error("An unknown error occurred while refining the prompt.");
   }
 }
