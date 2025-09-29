@@ -4,10 +4,11 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
-      "app_title": "GenSpark",
+      "app_title": "Flow-It Magical",
       "app_subtitle": "Prompt Engineering Studio",
       "menu_editor": "Prompt Editor",
       "menu_dashboard": "Dashboard",
+      "menu_theme": "Theme",
       "saved_prompts": "Saved Prompts",
       "history": "History",
       "template_role_label": "Role",
@@ -43,7 +44,14 @@ const resources = {
       "tester_expected_output_label": "Expected Output (contains)",
       "tester_result_pass": "PASS",
       "tester_result_fail": "FAIL",
-      "tester_results_title": "Test Results"
+      "tester_results_title": "Test Results",
+      "theme_title": "Theme Customizer",
+      "theme_desc": "Personalize the look and feel of the application.",
+      "theme_primary_color": "Primary Color",
+      "theme_background_color": "Background Color",
+      "theme_text_color": "Text Color",
+      "theme_card_color": "Card Color",
+      "theme_accent_color": "Accent Color"
     }
   }
 };

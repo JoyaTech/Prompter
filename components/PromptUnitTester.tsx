@@ -72,7 +72,8 @@ const PromptUnitTester: React.FC<PromptUnitTesterProps> = ({ prompt, t }) => {
                     <div key={tc.id} className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-md">
                         <span className="text-gray-400 font-mono text-sm">#{index + 1}</span>
                         <div className="flex-grow">
-                            <label className="text-xs text-gray-500">{t('tester_input_label')} (use `{"{{input}}`}" in prompt)</label>
+                            {/* FIX: Corrected a syntax error in the JSX expression. The original text was not a valid JavaScript expression. It has been converted to a template literal to correctly render the instructional text. */}
+                            <label className="text-xs text-gray-500">{`${t('tester_input_label')} (use \`{{input}}\` in prompt)`}</label>
                             <input
                                 type="text"
                                 value={tc.input}

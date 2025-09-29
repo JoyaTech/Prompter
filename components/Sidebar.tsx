@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page } from '../types';
-import { FlowItLogo, DashboardIcon, EditIcon } from './icons';
+import { FlowItLogo, DashboardIcon, EditIcon, SettingsIcon } from './icons';
 
 interface SidebarProps {
   currentPage: Page;
@@ -15,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, t }) => 
     <button
       onClick={() => setCurrentPage(page)}
       className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${
-        currentPage === page ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-300 hover:bg-gray-700'
+        currentPage === page ? 'bg-primary text-white shadow-lg' : 'text-text-secondary hover:bg-card-secondary hover:text-text-main'
       }`}
     >
       {React.cloneElement(icon, { className: 'w-5 h-5' })}
@@ -24,15 +24,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, t }) => 
   );
 
   return (
-    <aside className="w-64 bg-gray-800 p-6 flex-col space-y-8 border-r border-gray-700 hidden md:flex">
+    <aside className="w-64 bg-card p-6 flex-col space-y-8 border-r border-border-color hidden md:flex">
       <div className="flex items-center gap-3 mb-4">
-        <FlowItLogo className="w-8 h-8 text-indigo-400" />
-        <h2 className="text-xl font-bold text-white">{t('app_title')}</h2>
+        <FlowItLogo className="w-8 h-8 text-primary" />
+        <h2 className="text-xl font-bold text-text-main">{t('app_title')}</h2>
       </div>
 
       <nav className="space-y-2">
         <NavItem page="editor" icon={<EditIcon />} labelKey="menu_editor" />
         <NavItem page="dashboard" icon={<DashboardIcon />} labelKey="menu_dashboard" />
+        <NavItem page="theme" icon={<SettingsIcon />} labelKey="menu_theme" />
       </nav>
     </aside>
   );

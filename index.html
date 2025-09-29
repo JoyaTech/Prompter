@@ -4,12 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Perfect</title>
+    <title>Flow-It Magical</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
+            colors: {
+              primary: 'var(--color-primary)',
+              background: 'var(--color-background)',
+              card: 'var(--color-card)',
+              'card-secondary': 'var(--color-card-secondary)',
+              'text-main': 'var(--color-text-main)',
+              'text-secondary': 'var(--color-text-secondary)',
+              'accent': 'var(--color-accent)',
+              'border-color': 'var(--color-border)',
+            },
             animation: {
               'text-gradient': 'text-gradient 1.5s linear infinite',
               'border-width': 'border-width 3s infinite alternate',
@@ -52,7 +62,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-900 text-gray-100">
+  <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

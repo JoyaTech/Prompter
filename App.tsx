@@ -3,12 +3,15 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import PromptEditor from './components/PromptEditor';
 import Dashboard from './components/Dashboard';
+import ThemeCustomizer from './components/ThemeCustomizer';
 import { Page, Prompt, HistoryItem } from './types';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
+import { useTheme } from './hooks/useTheme';
 
 function App() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [currentPage, setCurrentPage] = useState<Page>('editor');
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -63,7 +66,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white font-sans">
+    <div className="flex h-screen bg-background text-text-main font-sans">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} t={t} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header t={t} />
@@ -80,6 +83,7 @@ function App() {
             />
           )}
           {currentPage === 'dashboard' && <Dashboard history={history} t={t} />}
+          {currentPage === 'theme' && <ThemeCustomizer />}
         </main>
       </div>
     </div>

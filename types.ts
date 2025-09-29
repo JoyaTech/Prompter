@@ -1,4 +1,4 @@
-export type Page = 'editor' | 'dashboard';
+export type Page = 'editor' | 'dashboard' | 'theme';
 
 export interface Prompt {
   id: string;
@@ -32,4 +32,15 @@ export interface TestResult {
     pass: boolean;
     actualOutput: string;
     error?: string;
+}
+
+export interface Theme {
+  primary: string;
+  background: string;
+  card: string;
+  cardSecondary: string;
+  textMain: string;
+  textSecondary: string;
+  accent: string;
+  border: string;
 }

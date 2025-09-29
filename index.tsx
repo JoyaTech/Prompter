@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 // FIX: Corrected import path for App component.
 import App from './App';
 import './i18n';
+import { ThemeProvider } from './components/ThemeContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,6 +13,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );
