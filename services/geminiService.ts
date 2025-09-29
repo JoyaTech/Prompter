@@ -1,53 +1,74 @@
+// services/geminiService.ts
 import { GoogleGenAI } from "@google/genai";
+import { Language, Mode } from "../types";
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
-}
+// FIX: Initialize GoogleGenAI with a named apiKey parameter as per the guidelines.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getSystemInstruction = (lang: Language, mode: Mode): string => {
+  const isHebrew = lang === 'he';
+  const languageInstruction = isHebrew 
+    ? "The user's prompt is in Hebrew. Your refined prompt must also be in Hebrew." 
+    : "The user's prompt is in English. Your refined prompt must also be in English.";
 
-/**
- * Refines a user-provided prompt using the Gemini AI model.
- * @param originalPrompt The initial prompt from the user.
- * @param mode The refinement mode, either 'quick' or 'deep'.
- * @returns A promise that resolves to the refined prompt as a string.
- */
-export async function refinePrompt(originalPrompt: string, mode: 'quick' | 'deep'): Promise<string> {
-  if (!originalPrompt.trim()) {
+  const modeInstruction = mode === 'deep' 
+    ? `
+      Deep Analysis Mode:
+      1.  Identify the user's core goal.
+      2.  Deconstruct the prompt into key components (e.g., role, task, context, constraints, format).
+      3.  Rewrite the prompt to be explicit, structured, and comprehensive. Use clear headings or sections if appropriate.
+      4.  Incorporate best practices for prompt engineering, such as providing examples (if applicable), defining the desired tone, and specifying the output format.
+      5.  The result should be a detailed, robust prompt that minimizes ambiguity.
+    `
+    : `
+      Quick Refine Mode:
+      1.  Identify the user's core goal.
+      2.  Clarify any ambiguous language.
+      3.  Make the prompt more concise and direct without losing essential details.
+      4.  Ensure the key instruction is clear and prominent.
+      5.  The result should be a polished, straightforward version of the user's original prompt.
+    `;
+  
+  return `You are an expert prompt engineering assistant. Your task is to refine a user's initial prompt to make it more effective for a large language model.
+    Do not respond to the user's prompt. Only refine the prompt itself.
+    Return ONLY the refined prompt text, with no preamble, explanations, or markdown formatting.
+    ${languageInstruction}
+    ${modeInstruction}
+  `;
+};
+
+export const refinePrompt = async (
+  prompt: string,
+  lang: Language,
+  mode: Mode
+): Promise<string> => {
+  if (!prompt.trim()) {
     throw new Error("Prompt cannot be empty.");
   }
 
   try {
-    const systemInstruction = `You are an expert in prompt engineering. Your task is to refine the user's input into a more powerful, precise, and effective prompt for a generative AI model.
-You will be given a mode: 'Quick' or 'Deep'.
-- If 'Quick Mode' is selected, the prompt should be concise and direct.
-- If 'Deep Mode' is selected, the prompt should be more detailed, structured, and include safeguards (e.g., specifying output format, error handling).
-Focus on clarity, specificity, and providing context. The output must be only the refined prompt, without any additional explanations, introductions, or pleasantries.
-Do not wrap the output in quotes or code blocks.`;
-
+    // FIX: Use ai.models.generateContent as per the guidelines.
+    // FIX: Use 'gemini-2.5-flash' model as per the guidelines.
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}.\nRefine this prompt: "${originalPrompt}"`,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7,
-        topP: 1,
-        topK: 32,
-      },
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            systemInstruction: getSystemInstruction(lang, mode),
+            // Use a moderate temperature for creative but controlled refinement.
+            temperature: 0.7,
+        }
     });
 
+    // FIX: Access the response text directly from the `.text` property.
     const refinedText = response.text;
-    
+
     if (!refinedText) {
-        throw new Error("Received an empty response from the AI.");
+        throw new Error("Failed to get a response from the model.");
     }
     
     return refinedText.trim();
   } catch (error) {
-    console.error("Error refining prompt:", error);
-    if (error instanceof Error) {
-        throw new Error(`Failed to communicate with the AI model: ${error.message}`);
-    }
-    throw new Error("An unknown error occurred while refining the prompt.");
+    console.error("Error calling Gemini API:", error);
+    throw new Error("Failed to refine prompt. Please check your API key and try again.");
   }
-}
+};

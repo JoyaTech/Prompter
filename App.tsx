@@ -1,156 +1,144 @@
-import React, { useState, useEffect } from 'react';
+// App.tsx
+import React, { useState, useCallback, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import Header from './components/Header';
 import PromptEditor from './components/PromptEditor';
 import OutputDisplay from './components/OutputDisplay';
+import { Language, Mode, Prompt, HistoryItem } from './types';
+import { useTranslation } from './i18n';
 import { refinePrompt } from './services/geminiService';
-import { HistoryItem, Prompt } from './types';
-import SavedPrompts from './components/SavedPrompts';
-import History from './components/History';
 
 function App() {
-  const [originalPrompt, setOriginalPrompt] = useState('');
+  // Internationalization
+  const [currentLang, setCurrentLang] = useState<Language>('en');
+  const t = useTranslation(currentLang);
+  
+  // App State
+  const [userPrompt, setUserPrompt] = useState('');
   const [refinedPrompt, setRefinedPrompt] = useState('');
+  const [mode, setMode] = useState<Mode>('quick');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'quick' | 'deep'>('quick');
-  
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
 
+  // Local Storage State
+  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  // Load from local storage on mount
   useEffect(() => {
     try {
+      const storedPrompts = localStorage.getItem('savedPrompts');
+      if (storedPrompts) setSavedPrompts(JSON.parse(storedPrompts));
+
       const storedHistory = localStorage.getItem('promptHistory');
       if (storedHistory) {
-        const parsedHistory = JSON.parse(storedHistory).map((item: any) => ({
-          ...item,
-          timestamp: new Date(item.timestamp),
-        }));
-        setHistory(parsedHistory);
-      }
-      const storedPrompts = localStorage.getItem('savedPrompts');
-      if (storedPrompts) {
-        setSavedPrompts(JSON.parse(storedPrompts));
+         setHistory(JSON.parse(storedHistory).map((item: any) => ({
+             ...item,
+             timestamp: new Date(item.timestamp)
+         })));
       }
     } catch (e) {
-      console.error("Failed to load data from localStorage", e);
+      console.error("Failed to parse from localStorage", e);
     }
   }, []);
 
+  // Save to local storage on change
   useEffect(() => {
-    try {
-      localStorage.setItem('promptHistory', JSON.stringify(history));
-    } catch (e) {
-      console.error("Failed to save history to localStorage", e);
-    }
-  }, [history]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('savedPrompts', JSON.stringify(savedPrompts));
-    } catch(e) {
-      console.error("Failed to save prompts to localStorage", e);
-    }
+    localStorage.setItem('savedPrompts', JSON.stringify(savedPrompts));
   }, [savedPrompts]);
 
-  const handleRefine = async (promptToRefine: string) => {
+  useEffect(() => {
+    localStorage.setItem('promptHistory', JSON.stringify(history));
+  }, [history]);
+
+  const handleRefine = useCallback(async () => {
+    if (!userPrompt.trim()) {
+      setError(t('error_empty_prompt'));
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setRefinedPrompt('');
-
     try {
-      const result = await refinePrompt(promptToRefine, mode);
+      const result = await refinePrompt(userPrompt, currentLang, mode);
       setRefinedPrompt(result);
+      // Add to history
       const newHistoryItem: HistoryItem = {
-        id: new Date().toISOString(),
-        prompt: promptToRefine,
-        response: result,
-        timestamp: new Date(),
+          id: uuidv4(),
+          prompt: userPrompt,
+          response: result,
+          timestamp: new Date(),
       };
-      // Keep history to a max of 10 items
-      setHistory([newHistoryItem, ...history].slice(0, 10));
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      setHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]); // Keep history to 50 items
+    } catch (e: any) {
+      setError(e.message || t('error_generic'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userPrompt, currentLang, mode, t]);
 
-  const handleSavePrompt = () => {
-    if (!refinedPrompt) return;
-    const name = prompt('Enter a name for this prompt:') || `Saved Prompt ${savedPrompts.length + 1}`;
-    if (name) {
-      const newPrompt: Prompt = {
-        id: new Date().toISOString(),
-        name,
-        text: refinedPrompt,
-      };
-      setSavedPrompts([newPrompt, ...savedPrompts]);
+  const handleSavePrompt = useCallback(() => {
+    if (!refinedPrompt.trim()) return;
+    const promptName = prompt("Enter a name for this prompt:", refinedPrompt.substring(0, 30) + '...');
+    if (promptName) {
+        const newPrompt: Prompt = {
+            id: uuidv4(),
+            name: promptName,
+            text: refinedPrompt,
+        };
+        setSavedPrompts(prev => [newPrompt, ...prev]);
     }
-  };
+  }, [refinedPrompt]);
 
-  const handleDeletePrompt = (id: string) => {
-    setSavedPrompts(savedPrompts.filter(p => p.id !== id));
-  };
+  const handleDeletePrompt = useCallback((id: string) => {
+    setSavedPrompts(prev => prev.filter(p => p.id !== id));
+  }, []);
 
-  const handleSelectPrompt = (promptText: string) => {
-    setRefinedPrompt(promptText);
-    setOriginalPrompt(''); 
-  };
-  
-  const handleDeleteHistory = (id: string) => {
-    setHistory(history.filter(h => h.id !== id));
-  };
+  const handleSelectPrompt = useCallback((promptText: string) => {
+    setUserPrompt(promptText);
+    setRefinedPrompt('');
+    setError(null);
+  }, []);
 
-  const handleSelectHistory = (prompt: string, response: string) => {
-    setOriginalPrompt(prompt);
-    setRefinedPrompt(response);
-  };
+  const handleDeleteHistory = useCallback((id: string) => {
+    setHistory(prev => prev.filter(h => h.id !== id));
+  }, []);
+
+  const handleSelectHistory = useCallback((prompt: string, response: string) => {
+      setUserPrompt(prompt);
+      setRefinedPrompt(response);
+      setError(null);
+  }, []);
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white font-sans p-4 sm:p-8">
-      <div className="max-w-4xl mx-auto">
-        <Header />
-        <main className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-          <div className="md:col-span-2 space-y-8">
-            <section>
-              <h2 className="text-2xl font-semibold mb-4 text-gray-200">1. Your Idea</h2>
-              <PromptEditor 
-                onSubmit={handleRefine}
-                isLoading={isLoading}
-                prompt={originalPrompt}
-                setPrompt={setOriginalPrompt}
+    <div className={`min-h-screen bg-gray-900 text-white font-sans ${currentLang === 'he' ? 'rtl' : 'ltr'}`}>
+      <main className="container mx-auto px-4 py-8 max-w-5xl">
+        <Header currentLang={currentLang} setLang={setCurrentLang} t={t} />
+        <div className="space-y-8">
+            <PromptEditor 
+                userPrompt={userPrompt}
+                setUserPrompt={setUserPrompt}
                 mode={mode}
                 setMode={setMode}
-              />
-            </section>
-            <section>
-              <h2 className="text-2xl font-semibold mb-4 text-gray-200">2. Refined Prompt</h2>
-              <OutputDisplay 
+                onRefine={handleRefine}
+                isLoading={isLoading}
+                t={t}
+                savedPrompts={savedPrompts}
+                onSelectPrompt={handleSelectPrompt}
+                onDeletePrompt={handleDeletePrompt}
+                history={history}
+                onSelectHistory={handleSelectHistory}
+                onDeleteHistory={handleDeleteHistory}
+            />
+            <OutputDisplay 
                 refinedPrompt={refinedPrompt}
                 isLoading={isLoading}
                 error={error}
                 onSave={handleSavePrompt}
-              />
-            </section>
-          </div>
-          <aside className="space-y-8">
-            <section>
-              <SavedPrompts
-                prompts={savedPrompts}
-                onSelectPrompt={handleSelectPrompt}
-                onDeletePrompt={handleDeletePrompt}
-              />
-            </section>
-            <section>
-               <History 
-                history={history}
-                onSelectHistory={handleSelectHistory}
-                onDeleteHistory={handleDeleteHistory}
-               />
-            </section>
-          </aside>
-        </main>
-      </div>
+                t={t}
+            />
+        </div>
+      </main>
     </div>
   );
 }

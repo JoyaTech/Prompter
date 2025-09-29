@@ -6,17 +6,17 @@ interface SavedPromptsProps {
   prompts: Prompt[];
   onSelectPrompt: (promptText: string) => void;
   onDeletePrompt: (id: string) => void;
+  t: (key: string) => string;
 }
 
-// FIX: Implement the SavedPrompts component to resolve placeholder content errors.
-const SavedPrompts: React.FC<SavedPromptsProps> = ({ prompts, onSelectPrompt, onDeletePrompt }) => {
+const SavedPrompts: React.FC<SavedPromptsProps> = ({ prompts, onSelectPrompt, onDeletePrompt, t }) => {
   if (prompts.length === 0) {
     return null; // Don't render anything if there are no saved prompts
   }
 
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-gray-300">Saved Prompts</h3>
+      <h3 className="text-lg font-semibold text-gray-300">{t('saved_prompts')}</h3>
       <div className="max-h-60 overflow-y-auto pr-2">
         <ul className="space-y-2">
           {prompts.map((prompt) => (

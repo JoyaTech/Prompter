@@ -1,4 +1,7 @@
-// FIX: Define and export Prompt and HistoryItem types to resolve module errors.
+// types.ts
+export type Language = 'en' | 'he';
+export type Mode = 'quick' | 'deep';
+
 export interface Prompt {
   id: string;
   name: string;

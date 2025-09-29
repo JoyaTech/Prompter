@@ -7,9 +7,10 @@ interface OutputDisplayProps {
   isLoading: boolean;
   error: string | null;
   onSave: () => void;
+  t: (key: string) => string;
 }
 
-const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading, error, onSave }) => {
+const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading, error, onSave, t }) => {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const hasContent = refinedPrompt.length > 0;
 
@@ -26,7 +27,7 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading,
       return (
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
-          <p className="ml-3 text-gray-400">Perfecting your prompt...</p>
+          <p className="ml-3 text-gray-400">{t('refining')}</p>
         </div>
       );
     }
@@ -38,7 +39,7 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading,
     }
     return (
       <p className="text-gray-500 text-center">
-        Your refined prompt will appear here once generated.
+        {t('output_placeholder')}
       </p>
     );
   };
@@ -51,13 +52,13 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading,
       {hasContent && !isLoading && !error && (
         <div className="flex justify-between items-center mt-4">
            <p className="text-xs text-gray-500">
-             Est. Tokens: {Math.ceil(refinedPrompt.length / 4)}
+             {t('est_tokens')} {Math.ceil(refinedPrompt.length / 4)}
            </p>
           <div className="flex items-center gap-3">
             {showSaveConfirmation && (
               <span className="text-sm text-green-400 flex items-center gap-1">
                 <CheckIcon className="w-4 h-4" />
-                Prompt Saved!
+                {t('prompt_saved')}
               </span>
             )}
             <button
@@ -65,7 +66,7 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading,
               className="px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 bg-indigo-600/30 text-indigo-300 hover:bg-indigo-500/40"
             >
                 <SaveIcon className="w-4 h-4" />
-                Save
+                {t('save_prompt')}
             </button>
             <CopyButton textToCopy={refinedPrompt} />
           </div>

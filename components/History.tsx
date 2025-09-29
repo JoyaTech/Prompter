@@ -6,17 +6,17 @@ interface HistoryProps {
   history: HistoryItem[];
   onSelectHistory: (prompt: string, response: string) => void;
   onDeleteHistory: (id: string) => void;
+  t: (key: string) => string;
 }
 
-// FIX: Implement the History component to resolve placeholder content errors.
-const History: React.FC<HistoryProps> = ({ history, onSelectHistory, onDeleteHistory }) => {
+const History: React.FC<HistoryProps> = ({ history, onSelectHistory, onDeleteHistory, t }) => {
   if (history.length === 0) {
     return null; // Don't render anything if history is empty
   }
 
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-gray-300">History</h3>
+      <h3 className="text-lg font-semibold text-gray-300">{t('history')}</h3>
       <div className="max-h-60 overflow-y-auto pr-2">
         <ul className="space-y-2">
           {history.map((item) => (
