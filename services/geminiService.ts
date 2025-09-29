@@ -1,100 +1,65 @@
-// FIX: Implemented file conversion and multi-modal request handling for RAG.
-import { GoogleGenAI, Type, Part } from "@google/genai";
-import { Mode, TargetModel, Language } from '../types';
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { TemplateFields } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set.");
-}
-
+// FIX: Initialized GoogleGenAI with the required apiKey object.
+// The API key is sourced from environment variables as per guidelines.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const model = 'gemini-2.5-flash';
 
-const responseSchema = {
-    type: Type.OBJECT,
-    properties: {
-        refined_prompt: { type: Type.STRING },
-        alignment_notes: { type: Type.STRING },
-        topics: { type: Type.ARRAY, items: { type: Type.STRING } },
-    },
-    required: ["refined_prompt", "alignment_notes", "topics"],
-};
+// FIX: Updated the model name to 'gemini-2.5-flash' as per the new guidelines.
+const modelName = 'gemini-2.5-flash';
 
-export interface RefinedPromptResponse {
-  refinedPrompt: string;
-  alignmentNotes: string | null;
-  topics: string[];
-}
-
-const fileToGenerativePart = (file: File): Promise<Part> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (typeof reader.result !== 'string') {
-                return reject(new Error("Failed to read file as Data URL."));
-            }
-            const [header, base64] = reader.result.split(';base64,');
-            const mimeType = header.replace('data:', '');
-            resolve({ inlineData: { data: base64, mimeType } });
-        };
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-    });
-};
-
-const getModelInstruction = (mode: Mode, targetModel: TargetModel, lang: Language): string => {
-    const languageInstruction = lang === 'he' ? "The user is Hebrew speaking. Refine the prompt to be effective, but ensure the final prompt's language and content are in HEBREW." : "The user is English speaking. The final prompt's language and content must be in ENGLISH.";
-    const targetModelInstruction = `CRITICAL: The final prompt must be optimized for the following target model: ${targetModel}. Adjust syntax, structure, and instructions accordingly.`;
-    const modeInstruction = mode === 'deep'
-        ? `Deep Analysis Mode: Your response MUST be a valid JSON object conforming to the schema.`
-        : `Quick Refine Mode: Return ONLY the refined prompt text, with no preamble or explanations.`;
-
-    return `You are an expert prompt engineering assistant. Your task is to refine a user's initial prompt to make it more effective.
-    ${languageInstruction}
-    ${targetModelInstruction}
-    ${modeInstruction}`;
-};
-
-export const refinePrompt = async (
-  originalPrompt: string,
-  mode: Mode,
-  targetModel: TargetModel,
-  lang: Language,
-  uploadedFile: File | null
-): Promise<RefinedPromptResponse> => {
-  try {
-    const systemInstruction = getModelInstruction(mode, targetModel, lang);
-    const contents: Part[] = [];
-    let userPromptText = `Original prompt to refine: "${originalPrompt}"`;
-
-    if (uploadedFile) {
-        contents.push(await fileToGenerativePart(uploadedFile));
-        userPromptText = `CRITICAL RAG CONTEXT: Use the attached file content as the primary data source for the refinement. NOW, ${userPromptText}`;
+export const generateContent = async (prompt: string): Promise<GenerateContentResponse> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+        });
+        return response;
+    } catch (error) {
+        console.error("Error generating content:", error);
+        throw error;
     }
-    contents.push({ text: userPromptText });
+};
 
-    const response = await ai.models.generateContent({
-        model: model,
-        contents: contents,
-        config: {
-            systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema,
-        },
-    });
+export const constructPromptFromTemplate = (
+    fields: TemplateFields,
+    additionalInstructions: string
+): string => {
+    let prompt = "";
+    if (fields.role) prompt += `Role: ${fields.role}\n`;
+    if (fields.task) prompt += `Task: ${fields.task}\n`;
+    if (fields.context) prompt += `Context: ${fields.context}\n`;
+    if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n`;
+    if (additionalInstructions) prompt += `\nInstructions:\n${additionalInstructions}`;
+    
+    return prompt.trim();
+};
 
-    const text = response.text;
-    const parsedJson = JSON.parse(text);
+export const analyzeAlignment = async (prompt: string, response: string): Promise<string> => {
+    try {
+        const analysisPrompt = `
+        Analyze the following prompt and response for potential safety and alignment issues.
+        Identify any problematic content, biases, or deviations from helpful and harmless principles.
+        Provide a concise summary of your findings. If no issues are found, state "No alignment issues detected.".
 
-    return {
-        refinedPrompt: parsedJson.refined_prompt || '',
-        alignmentNotes: parsedJson.alignment_notes || null,
-        topics: parsedJson.topics || [],
-    };
-  } catch (error) {
-    console.error('Error refining prompt with Gemini API:', error);
-    if (error instanceof Error) {
-        throw new Error(`Failed to refine prompt: ${error.message}`);
+        Prompt: "${prompt}"
+
+        Response: "${response}"
+
+        Analysis:
+        `;
+        
+        const analysisResponse = await ai.models.generateContent({
+            model: modelName,
+            contents: analysisPrompt,
+        });
+
+        // FIX: Replaced response.response.text() with response.text as per guidelines
+        // for direct access to the generated text content.
+        return analysisResponse.text;
+
+    } catch (error) {
+        console.error("Error analyzing alignment:", error);
+        return "Failed to analyze alignment.";
     }
-    throw new Error('An unknown error occurred while refining the prompt.');
-  }
 };

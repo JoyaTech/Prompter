@@ -1,78 +1,43 @@
-import React, { useState } from 'react';
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import CopyButton from './CopyButton';
-// FIX: Corrected import path to be relative.
-import { SaveIcon, CheckIcon } from './icons';
+import { SparklesIcon } from './icons';
 
 interface OutputDisplayProps {
-  refinedPrompt: string;
+  output: string;
   isLoading: boolean;
-  error: string | null;
-  onSave: () => void;
+  prompt: string;
   t: (key: string) => string;
 }
 
-const OutputDisplay: React.FC<OutputDisplayProps> = ({ refinedPrompt, isLoading, error, onSave, t }) => {
-  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
-  const hasContent = refinedPrompt.length > 0;
-
-  const handleSave = () => {
-    onSave();
-    setShowSaveConfirmation(true);
-    setTimeout(() => {
-      setShowSaveConfirmation(false);
-    }, 2000);
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
-          <p className="ml-3 text-gray-400">{t('refining')}</p>
-        </div>
-      );
-    }
-    if (error) {
-      return <p className="text-red-400 text-center">{error}</p>;
-    }
-    if (hasContent) {
-      return <p className="whitespace-pre-wrap">{refinedPrompt}</p>;
-    }
-    return (
-      <p className="text-gray-500 text-center">
-        {t('output_placeholder')}
-      </p>
-    );
-  };
-
+const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt, t }) => {
   return (
-    <div className="bg-gray-800/50 rounded-lg p-6 min-h-[150px] flex flex-col justify-between">
-      <div className="flex-grow text-gray-200">
-        {renderContent()}
+    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex-grow flex flex-col">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-lg font-semibold text-gray-300">{t('output_title')}</h3>
+        {output && !isLoading && <CopyButton textToCopy={output} />}
       </div>
-      {hasContent && !isLoading && !error && (
-        <div className="flex justify-between items-center mt-4">
-           <p className="text-xs text-gray-500">
-             {t('est_tokens')} {Math.ceil(refinedPrompt.length / 4)}
-           </p>
-          <div className="flex items-center gap-3">
-            {showSaveConfirmation && (
-              <span className="text-sm text-green-400 flex items-center gap-1">
-                <CheckIcon className="w-4 h-4" />
-                {t('prompt_saved')}
-              </span>
-            )}
-            <button
-              onClick={handleSave}
-              className="px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 bg-indigo-600/30 text-indigo-300 hover:bg-indigo-500/40"
-            >
-                <SaveIcon className="w-4 h-4" />
-                {t('save_prompt')}
-            </button>
-            <CopyButton textToCopy={refinedPrompt} />
+      <div className="prose prose-invert prose-sm max-w-none bg-gray-900/50 rounded-md p-4 overflow-y-auto flex-grow">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-2 text-gray-400">
+                <SparklesIcon className="w-8 h-8 animate-pulse" />
+                <span>{t('status_generating')}</span>
+            </div>
           </div>
+        ) : output ? (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+        ) : (
+          <p className="text-gray-500">{t('output_placeholder')}</p>
+        )}
+      </div>
+       {prompt && !isLoading && (
+        <div className="mt-4 p-3 bg-gray-900/50 rounded-md border border-gray-700">
+            <p className="text-xs text-gray-500 font-semibold mb-1">{t('prompt_used_label')}</p>
+            <p className="text-xs text-gray-400 whitespace-pre-wrap font-mono">{prompt}</p>
         </div>
-      )}
+       )}
     </div>
   );
 };

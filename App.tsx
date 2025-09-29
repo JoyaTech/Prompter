@@ -1,135 +1,89 @@
-// FIX: Updated App.tsx to manage TemplateFields, File state, and pass them to PromptEditor and the service.
-import React, { useState, useEffect, useCallback } from 'react';
-import Header from './components/Header';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 import PromptEditor from './components/PromptEditor';
 import Dashboard from './components/Dashboard';
-import { getTranslator } from './i18n';
-import { Language, Page, Prompt, HistoryItem, TemplateFields, Mode, TargetModel } from './types';
-import { refinePrompt, RefinedPromptResponse } from './services/geminiService';
+import { Page, Prompt, HistoryItem } from './types';
+import { useTranslation } from 'react-i18next';
+import { v4 as uuidv4 } from 'uuid';
 
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+function App() {
+  const { t } = useTranslation();
+  const [currentPage, setCurrentPage] = useState<Page>('editor');
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
-const App: React.FC = () => {
-    const [lang, setLang] = useState<Language>('en');
-    const [currentPage, setCurrentPage] = useState<Page>('editor');
-    const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
-    const [history, setHistory] = useState<HistoryItem[]>([]);
-    const [mode, setMode] = useState<Mode>('quick');
-    const [targetModel, setTargetModel] = useState<TargetModel>('Generic-LLM');
+  useEffect(() => {
+    try {
+      const savedPrompts = localStorage.getItem('prompts');
+      if (savedPrompts) {
+        setPrompts(JSON.parse(savedPrompts));
+      }
+      const savedHistory = localStorage.getItem('history');
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory).map((item: HistoryItem) => ({ ...item, timestamp: new Date(item.timestamp) })));
+      }
+    } catch (error) {
+      console.error("Failed to load data from localStorage", error);
+    }
+  }, []);
 
-    // State for Quick Mode input
-    const [prompt, setPrompt] = useState('');
-    
-    // State for Deep Mode (Template Builder)
-    const [templateFields, setTemplateFields] = useState<TemplateFields>({
-        role: '', task: '', context: '', constraints: '',
-    });
+  useEffect(() => {
+    try {
+      localStorage.setItem('prompts', JSON.stringify(prompts));
+    } catch (error) {
+      console.error("Failed to save prompts to localStorage", error);
+    }
+  }, [prompts]);
 
-    // State for RAG (File Upload)
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  useEffect(() => {
+    try {
+      localStorage.setItem('history', JSON.stringify(history));
+    } catch (error) {
+      console.error("Failed to save history to localStorage", error);
+    }
+  }, [history]);
 
-    const t = useCallback(getTranslator(lang), [lang]);
+  const handleSavePrompt = (name: string, text: string) => {
+    const newPrompt: Prompt = { id: uuidv4(), name, text };
+    setPrompts([newPrompt, ...prompts]);
+  };
 
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem('flowit_prompts');
-            if (saved) setSavedPrompts(JSON.parse(saved));
-            
-            const historySaved = localStorage.getItem('flowit_history');
-            if (historySaved) {
-                setHistory(JSON.parse(historySaved).map((item: any) => ({ ...item, timestamp: new Date(item.timestamp) })));
-            }
-        } catch (error) { console.error("Failed to load data from localStorage", error); }
-    }, []);
+  const handleDeletePrompt = (id: string) => {
+    setPrompts(prompts.filter(p => p.id !== id));
+  };
 
-    useEffect(() => {
-        localStorage.setItem('flowit_prompts', JSON.stringify(savedPrompts));
-    }, [savedPrompts]);
+  const handleAddHistory = (prompt: string, response: string, alignment_notes?: string) => {
+    const newHistoryItem: HistoryItem = { id: uuidv4(), prompt, response, timestamp: new Date(), alignment_notes };
+    setHistory([newHistoryItem, ...history]);
+  };
+  
+  const handleDeleteHistory = (id: string) => {
+    setHistory(history.filter(h => h.id !== id));
+  };
 
-    useEffect(() => {
-        localStorage.setItem('flowit_history', JSON.stringify(history));
-    }, [history]);
-
-    const buildPromptFromFields = (): string => {
-        const { role, task, context, constraints } = templateFields;
-        const structuredPart = `ROLE: ${role}\nTASK: ${task}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}`;
-        return `${structuredPart}\n\nAdditional Instructions: ${prompt}`;
-    };
-
-    const handleRefinePrompt = async (): Promise<RefinedPromptResponse> => {
-        const promptToRefine = mode === 'deep' ? buildPromptFromFields() : prompt;
-        
-        const result = await refinePrompt(promptToRefine, mode, targetModel, lang, uploadedFile);
-
-        const newHistoryItem: HistoryItem = {
-            id: generateId(),
-            prompt: promptToRefine,
-            response: result.refinedPrompt,
-            timestamp: new Date(),
-            alignment_notes: result.alignmentNotes,
-            topics: result.topics,
-        };
-        setHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-        return result;
-    };
-
-    const handleSavePrompt = (promptText: string) => {
-        const name = promptText.split(' ').slice(0, 5).join(' ') + '...';
-        const newPrompt = { id: generateId(), name, text: promptText };
-        setSavedPrompts(prev => [newPrompt, ...prev.filter(p => p.id !== newPrompt.id)]);
-    };
-
-    const handleDeletePrompt = (id: string) => setSavedPrompts(prev => prev.filter(p => p.id !== id));
-    const handleDeleteHistory = (id: string) => setHistory(prev => prev.filter(h => h.id !== h.id));
-
-    const handleSetLang = (newLang: Language) => {
-        setLang(newLang);
-        document.documentElement.lang = newLang;
-        document.documentElement.dir = newLang === 'he' ? 'rtl' : 'ltr';
-    };
-
-    const handleSetFile = (file: File | null) => {
-        if (file && file.size > 5 * 1024 * 1024) { // 5MB limit
-            alert(t('file_too_large'));
-            setUploadedFile(null);
-        } else {
-            setUploadedFile(file);
-        }
-    };
-
-    return (
-        <div className="bg-gray-900 text-white min-h-screen font-sans">
-            <div className="flex h-screen">
-                <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} t={t} />
-                <main className="flex-1 p-6 sm:p-10 overflow-y-auto">
-                    <Header currentLang={lang} setLang={handleSetLang} t={t} />
-                    {currentPage === 'editor' && (
-                        <PromptEditor
-                            onRefine={handleRefinePrompt}
-                            onSavePrompt={handleSavePrompt}
-                            onDeletePrompt={handleDeletePrompt}
-                            onDeleteHistory={handleDeleteHistory}
-                            savedPrompts={savedPrompts}
-                            history={history}
-                            t={t}
-                            mode={mode}
-                            setMode={setMode}
-                            targetModel={targetModel}
-                            setTargetModel={setTargetModel}
-                            prompt={prompt}
-                            setPrompt={setPrompt}
-                            templateFields={templateFields}
-                            setTemplateFields={setTemplateFields}
-                            uploadedFile={uploadedFile}
-                            onSetFile={handleSetFile}
-                        />
-                    )}
-                    {currentPage === 'dashboard' && <Dashboard history={history} t={t} />}
-                </main>
-            </div>
-        </div>
-    );
-};
+  return (
+    <div className="flex h-screen bg-gray-900 text-white font-sans">
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} t={t} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header t={t} />
+        <main className="flex-1 overflow-y-auto p-8">
+          {currentPage === 'editor' && (
+            <PromptEditor
+              prompts={prompts}
+              history={history}
+              onSavePrompt={handleSavePrompt}
+              onDeletePrompt={handleDeletePrompt}
+              onAddHistory={handleAddHistory}
+              onDeleteHistory={handleDeleteHistory}
+              t={t}
+            />
+          )}
+          {currentPage === 'dashboard' && <Dashboard history={history} t={t} />}
+        </main>
+      </div>
+    </div>
+  );
+}
 
 export default App;

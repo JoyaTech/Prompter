@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HistoryItem } from '../types';
 import { TrashIcon, ShieldCheckIcon } from './icons';

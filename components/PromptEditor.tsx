@@ -1,176 +1,142 @@
-// FIX: Implemented conditional rendering for the Template Builder and the RAG file selector UI.
-import React, { useState, useRef } from 'react';
-import TemplateBuilder from './TemplateBuilder'; 
+import React, { useState } from 'react';
+import { generateContent, constructPromptFromTemplate, analyzeAlignment } from '../services/geminiService';
+import { Prompt, HistoryItem, TemplateFields } from '../types';
+import TemplateBuilder from './TemplateBuilder';
 import OutputDisplay from './OutputDisplay';
 import SavedPrompts from './SavedPrompts';
 import History from './History';
-import { SparklesIcon, PlusIcon, TrashIcon, CheckIcon } from './icons';
-import { HistoryItem, Prompt, TemplateFields, Mode, TargetModel } from '../types';
-import { RefinedPromptResponse } from '../services/geminiService';
+import PromptUnitTester from './PromptUnitTester';
+import { SaveIcon, SparklesIcon } from './icons';
 
 interface PromptEditorProps {
-    onRefine: () => Promise<RefinedPromptResponse>;
-    onSavePrompt: (promptText: string) => void;
-    onDeletePrompt: (id: string) => void;
-    onDeleteHistory: (id: string) => void;
-    savedPrompts: Prompt[];
-    history: HistoryItem[];
-    t: (key: string, params?: Record<string, string>) => string;
-    mode: Mode;
-    setMode: (mode: Mode) => void;
-    targetModel: TargetModel;
-    setTargetModel: (model: TargetModel) => void;
-    prompt: string;
-    setPrompt: (prompt: string) => void;
-    templateFields: TemplateFields;
-    setTemplateFields: (fields: TemplateFields) => void;
-    uploadedFile: File | null;
-    onSetFile: (file: File | null) => void;
+  prompts: Prompt[];
+  history: HistoryItem[];
+  onSavePrompt: (name: string, text: string) => void;
+  onDeletePrompt: (id: string) => void;
+  onAddHistory: (prompt: string, response: string, alignmentNotes?: string) => void;
+  onDeleteHistory: (id: string) => void;
+  t: (key: string) => string;
 }
 
-const PromptEditor: React.FC<PromptEditorProps> = (props) => {
-    const { 
-        onRefine, onSavePrompt, onDeletePrompt, onDeleteHistory, savedPrompts, history, t,
-        mode, setMode, targetModel, setTargetModel, prompt, setPrompt, 
-        templateFields, setTemplateFields, uploadedFile, onSetFile 
-    } = props;
-    
-    const [refinedPrompt, setRefinedPrompt] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+const PromptEditor: React.FC<PromptEditorProps> = ({
+  prompts,
+  history,
+  onSavePrompt,
+  onDeletePrompt,
+  onAddHistory,
+  onDeleteHistory,
+  t,
+}) => {
+  const [templateFields, setTemplateFields] = useState<TemplateFields>({ role: '', task: '', context: '', constraints: '' });
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
+  const [finalPrompt, setFinalPrompt] = useState('');
+  const [output, setOutput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showTester, setShowTester] = useState(false);
 
-    const handleRefine = async () => {
-        setIsLoading(true);
-        setError(null);
-        setRefinedPrompt('');
-        try {
-            const result = await onRefine();
-            setRefinedPrompt(result.refinedPrompt);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const handleGenerate = async () => {
+    const constructedPrompt = constructPromptFromTemplate(templateFields, additionalInstructions);
+    if (!constructedPrompt) {
+      setError(t('error_empty_prompt'));
+      return;
+    }
+    setFinalPrompt(constructedPrompt);
+    setIsLoading(true);
+    setError(null);
+    setOutput('');
 
-    // FIX: Corrected the signature of handleSelectHistory to match the onSelectHistory prop of the History component.
-    // It now accepts 'prompt' and 'response' as separate string arguments instead of a single HistoryItem object.
-    const handleSelectHistory = (prompt: string, response: string) => {
-        if (mode === 'quick') setPrompt(prompt);
-        // In a more advanced version, we could parse the prompt back into fields for deep mode
-        setRefinedPrompt(response);
-    };
+    try {
+      const response = await generateContent(constructedPrompt);
+      // FIX: Replaced response.response.text() with response.text for direct access to the generated text content.
+      const responseText = response.text;
+      setOutput(responseText);
+      const alignmentNotes = await analyzeAlignment(constructedPrompt, responseText);
+      onAddHistory(constructedPrompt, responseText, alignmentNotes);
+    } catch (err) {
+      console.error(err);
+      setError(t('error_generation_failed'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const isRefineDisabled = () => {
-        if (isLoading) return true;
-        if (mode === 'deep' && (!templateFields.task.trim() || !templateFields.role.trim())) return true;
-        if (mode === 'quick' && !prompt.trim() && !uploadedFile) return true;
-        return false;
-    };
+  const handleSave = () => {
+    const constructedPrompt = constructPromptFromTemplate(templateFields, additionalInstructions);
+    if (!constructedPrompt) return;
+    const name = prompt(t('prompt_name_prompt'), t('prompt_name_default'));
+    if (name) {
+      onSavePrompt(name, constructedPrompt);
+    }
+  };
 
-    return (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                    <div className="flex gap-2 flex-wrap">
-                        <ModeToggle mode={mode} setMode={setMode} t={t} />
-                        <TargetModelSelector targetModel={targetModel} setTargetModel={setTargetModel} t={t} />
-                    </div>
+  const handleSelectPrompt = (promptText: string) => {
+    // This is a simplification. A real app might parse the text back into fields.
+    setAdditionalInstructions(promptText);
+    setTemplateFields({ role: '', task: '', context: '', constraints: '' });
+    setFinalPrompt(promptText);
+  };
+  
+  const handleSelectHistory = (prompt: string, response: string) => {
+     // This is a simplification. A real app might parse the text back into fields.
+    setAdditionalInstructions(prompt);
+    setTemplateFields({ role: '', task: '', context: '', constraints: '' });
+    setFinalPrompt(prompt);
+    setOutput(response);
+  }
 
-                    {mode === 'quick' ? (
-                        <textarea
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            placeholder={t('prompt_placeholder')}
-                            className="w-full h-48 p-4 bg-gray-900/50 border border-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-200"
-                        />
-                    ) : (
-                        <TemplateBuilder
-                            fields={templateFields}
-                            onFieldChange={setTemplateFields}
-                            t={t}
-                        >
-                            <textarea
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder={t('prompt_placeholder')}
-                                className="w-full h-24 p-4 bg-gray-900/50 border border-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-200"
-                            />
-                        </TemplateBuilder>
-                    )}
-                    
-                    <FileUploadComponent uploadedFile={uploadedFile} onSetFile={onSetFile} t={t} />
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 h-full">
+      <div className="md:col-span-4 lg:col-span-3 space-y-6 overflow-y-auto pr-2">
+        <SavedPrompts prompts={prompts} onSelectPrompt={handleSelectPrompt} onDeletePrompt={onDeletePrompt} t={t} />
+        <History history={history} onSelectHistory={handleSelectHistory} onDeleteHistory={onDeleteHistory} t={t} />
+      </div>
 
-                    <button
-                        onClick={handleRefine}
-                        disabled={isRefineDisabled()}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 text-lg font-semibold rounded-lg transition-colors bg-indigo-600 text-white hover:bg-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                    >
-                        <SparklesIcon className="w-5 h-5" />
-                        {isLoading ? t('refining') : t('refine_prompt')}
-                    </button>
-                </div>
-                <div className="space-y-6">
-                    <OutputDisplay refinedPrompt={refinedPrompt} isLoading={isLoading} error={error} onSave={() => onSavePrompt(refinedPrompt)} t={t} />
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <SavedPrompts prompts={savedPrompts} onSelectPrompt={setRefinedPrompt} t={t} onDeletePrompt={onDeletePrompt} />
-                        <History history={history} onSelectHistory={handleSelectHistory} t={t} onDeleteHistory={onDeleteHistory} />
-                    </div>
-                </div>
+      <div className="md:col-span-8 lg:col-span-9 flex flex-col gap-6">
+        <div className="flex-grow flex flex-col gap-6">
+          <TemplateBuilder fields={templateFields} onFieldChange={setTemplateFields} t={t}>
+            <textarea
+              value={additionalInstructions}
+              onChange={(e) => setAdditionalInstructions(e.target.value)}
+              className="w-full h-32 p-3 bg-gray-900/50 border border-gray-600 rounded-md text-sm text-gray-200 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              placeholder={t('prompt_placeholder')}
+            />
+          </TemplateBuilder>
+          
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleGenerate}
+                disabled={isLoading}
+                className="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                <SparklesIcon className="w-5 h-5" />
+                {isLoading ? t('button_generating') : t('button_generate')}
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-5 py-2.5 bg-gray-700 text-gray-300 font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+              >
+                <SaveIcon className="w-5 h-5" />
+                {t('button_save')}
+              </button>
             </div>
+             <button
+              onClick={() => setShowTester(!showTester)}
+              className="px-4 py-2 text-sm font-medium text-cyan-400 border border-cyan-400/50 rounded-lg hover:bg-cyan-400/10 transition-colors"
+            >
+              {t('button_unit_test')}
+            </button>
+          </div>
+          
+          {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md">{error}</p>}
+          
+          <OutputDisplay output={output} isLoading={isLoading} prompt={finalPrompt} t={t} />
         </div>
-    );
-};
-
-const ModeToggle: React.FC<{ mode: Mode, setMode: (mode: Mode) => void, t: (key: string) => string }> = ({ mode, setMode, t }) => (
-    <div className="flex bg-gray-800/50 p-1 rounded-lg">
-        <button onClick={() => setMode('quick')} className={`flex-1 px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${mode === 'quick' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('quick_mode')}</button>
-        <button onClick={() => setMode('deep')} className={`flex-1 px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${mode === 'deep' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('deep_mode')}</button>
+        {showTester && <PromptUnitTester prompt={constructPromptFromTemplate(templateFields, additionalInstructions)} t={t} />}
+      </div>
     </div>
-);
-
-const TargetModelSelector: React.FC<{ targetModel: TargetModel, setTargetModel: (model: TargetModel) => void, t: (key: string) => string }> = ({ targetModel, setTargetModel, t }) => (
-    <div className="flex items-center bg-gray-800/50 p-1 rounded-lg">
-        <label className="text-sm text-gray-400 px-2">{t('target_model_label')}</label>
-        <select
-            value={targetModel}
-            onChange={(e) => setTargetModel(e.target.value as TargetModel)}
-            className="bg-gray-700 border-gray-600 text-white text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-        >
-            <option value="Generic-LLM">{t('model_generic')}</option>
-            <option value="Gemini-Ultra">{t('model_gemini_ultra')}</option>
-            <option value="Code-Interpreter">{t('model_code_interpreter')}</option>
-            <option value="Imagen">{t('model_imagen')}</option>
-        </select>
-    </div>
-);
-
-const FileUploadComponent: React.FC<{ uploadedFile: File | null; onSetFile: (file: File | null) => void; t: (key: string, params?: Record<string, string>) => string; }> = ({ uploadedFile, onSetFile, t }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => onSetFile(e.target.files ? e.target.files[0] : null);
-
-    return (
-        <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf,.txt,.md,.png,.jpg,.jpeg" className="hidden" />
-            {uploadedFile ? (
-                <div className="flex items-center gap-2 text-sm text-cyan-300">
-                    <CheckIcon className="w-5 h-5 text-green-400" />
-                    <span className="truncate" title={uploadedFile.name}>{t('file_attached', { fileName: uploadedFile.name })}</span>
-                    <button onClick={() => onSetFile(null)} className="ml-auto text-red-400 hover:text-red-300" title={t('remove_file_title')}>
-                        <TrashIcon className="w-4 h-4" />
-                    </button>
-                </div>
-            ) : (
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors bg-indigo-700/50 text-indigo-300 hover:bg-indigo-600/50"
-                >
-                    <PlusIcon className="w-5 h-5" />
-                    {t('attach_file')}
-                </button>
-            )}
-        </div>
-    );
+  );
 };
 
 export default PromptEditor;

@@ -1,39 +1,27 @@
 import React from 'react';
-// FIX: Corrected import paths to be relative.
-import { FlowItLogo } from './icons'; 
-import { Language } from '../types';
+import { GithubIcon } from './icons';
 
 interface HeaderProps {
-    currentLang: Language;
-    setLang: (lang: Language) => void;
-    t: (key: any) => string;
+  t: (key: string) => string;
 }
 
-function Header({ currentLang, setLang, t }: HeaderProps): React.ReactElement {
-  const isHebrew = currentLang === 'he';
-
+const Header: React.FC<HeaderProps> = ({ t }) => {
   return (
-    <header className="relative text-center mb-10">
-      <div className="absolute top-0 left-0">
-         <button
-            onClick={() => setLang(isHebrew ? 'en' : 'he')}
-            className="px-4 py-2 text-sm font-medium rounded-full transition-colors bg-gray-700 hover:bg-gray-600 text-gray-300"
-            title={t('switch_title')}
+    <header className="flex-shrink-0 bg-gray-800/50 border-b border-gray-700 px-8 py-4 flex justify-between items-center">
+      <h1 className="text-xl font-semibold text-gray-200">{t('app_subtitle')}</h1>
+      <div>
+        <a 
+          href="https://github.com/google/generative-ai-docs/tree/main/site/en/tutorials/prompt_gallery" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-gray-400 hover:text-white transition-colors"
+          aria-label="GitHub Repository"
         >
-            {t('switch_lang')}
-        </button>
+          <GithubIcon className="w-6 h-6" />
+        </a>
       </div>
-      <div className="flex justify-center items-center gap-4 mb-2">
-        <FlowItLogo className="w-12 h-12" />
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-teal-300 via-cyan-400 to-sky-500 bg-clip-text text-transparent">
-          {t('app_title')}
-        </h1>
-      </div>
-      <p className="text-lg text-gray-400">
-        {t('app_tagline')}
-      </p>
     </header>
   );
-}
+};
 
 export default Header;
