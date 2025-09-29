@@ -1,11 +1,11 @@
 // services/geminiService.ts
 import { GoogleGenAI } from "@google/genai";
-import { Language, Mode } from "../types";
+import { Language, Mode, TargetModel } from "../types";
 
 // FIX: Initialize GoogleGenAI with a named apiKey parameter as per the guidelines.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-const getSystemInstruction = (lang: Language, mode: Mode): string => {
+const getSystemInstruction = (lang: Language, mode: Mode, targetModel: TargetModel): string => {
   const isHebrew = lang === 'he';
   const languageInstruction = isHebrew 
     ? "The user's prompt is in Hebrew. Your refined prompt must also be in Hebrew." 
@@ -29,10 +29,13 @@ const getSystemInstruction = (lang: Language, mode: Mode): string => {
       5.  The result should be a polished, straightforward version of the user's original prompt.
     `;
   
+  const targetModelInstruction = `CRITICAL: The final prompt must be optimized for the following target model or tool: ${targetModel}. Adjust syntax, structure, and instructions accordingly.`;
+
   return `You are an expert prompt engineering assistant. Your task is to refine a user's initial prompt to make it more effective for a large language model.
     Do not respond to the user's prompt. Only refine the prompt itself.
     Return ONLY the refined prompt text, with no preamble, explanations, or markdown formatting.
     ${languageInstruction}
+    ${targetModelInstruction}
     ${modeInstruction}
   `;
 };
@@ -40,7 +43,8 @@ const getSystemInstruction = (lang: Language, mode: Mode): string => {
 export const refinePrompt = async (
   prompt: string,
   lang: Language,
-  mode: Mode
+  mode: Mode,
+  targetModel: TargetModel
 ): Promise<string> => {
   if (!prompt.trim()) {
     throw new Error("Prompt cannot be empty.");
@@ -53,7 +57,7 @@ export const refinePrompt = async (
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
-            systemInstruction: getSystemInstruction(lang, mode),
+            systemInstruction: getSystemInstruction(lang, mode, targetModel),
             // Use a moderate temperature for creative but controlled refinement.
             temperature: 0.7,
         }

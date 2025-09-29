@@ -1,6 +1,6 @@
 // components/PromptEditor.tsx
 import React from 'react';
-import { Mode, Prompt, HistoryItem } from '../types';
+import { Mode, Prompt, HistoryItem, TargetModel } from '../types';
 import { WandIcon } from './icons';
 import SavedPrompts from './SavedPrompts';
 import History from './History';
@@ -10,6 +10,8 @@ interface PromptEditorProps {
   setUserPrompt: (prompt: string) => void;
   mode: Mode;
   setMode: (mode: Mode) => void;
+  targetModel: TargetModel;
+  setTargetModel: (model: TargetModel) => void;
   onRefine: () => void;
   isLoading: boolean;
   t: (key: string) => string;
@@ -26,6 +28,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   setUserPrompt,
   mode,
   setMode,
+  targetModel,
+  setTargetModel,
   onRefine,
   isLoading,
   t,
@@ -52,8 +56,13 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <ModeToggle mode={mode} setMode={setMode} t={t} />
+            <TargetModelSelector
+              targetModel={targetModel}
+              setTargetModel={setTargetModel}
+              t={t}
+            />
           </div>
           <button
             onClick={onRefine}
@@ -109,5 +118,41 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ mode, setMode, t }) => {
         </div>
     );
 };
+
+interface TargetModelSelectorProps {
+  targetModel: TargetModel;
+  setTargetModel: (model: TargetModel) => void;
+  t: (key: string) => string;
+}
+
+const TargetModelSelector: React.FC<TargetModelSelectorProps> = ({ targetModel, setTargetModel, t }) => {
+  const models: TargetModel[] = ['Generic-LLM', 'Gemini-Ultra', 'Code-Interpreter', 'Imagen'];
+
+  const modelTranslations: Record<TargetModel, string> = {
+    'Generic-LLM': t('model_generic'),
+    'Gemini-Ultra': t('model_gemini_ultra'),
+    'Code-Interpreter': t('model_code_interpreter'),
+    'Imagen': t('model_imagen'),
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <label htmlFor="target-model" className="text-sm font-medium text-gray-400">{t('target_model_label')}</label>
+      <select
+        id="target-model"
+        value={targetModel}
+        onChange={(e) => setTargetModel(e.target.value as TargetModel)}
+        className="bg-gray-800/60 border border-gray-700 text-white text-sm rounded-full focus:ring-indigo-500 focus:border-indigo-500 block p-2"
+      >
+        {models.map(model => (
+          <option key={model} value={model}>
+            {modelTranslations[model]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 
 export default PromptEditor;

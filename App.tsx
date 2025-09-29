@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Header from './components/Header';
 import PromptEditor from './components/PromptEditor';
 import OutputDisplay from './components/OutputDisplay';
-import { Language, Mode, Prompt, HistoryItem } from './types';
+import { Language, Mode, Prompt, HistoryItem, TargetModel } from './types';
 import { useTranslation } from './i18n';
 import { refinePrompt } from './services/geminiService';
 
@@ -17,6 +17,7 @@ function App() {
   const [userPrompt, setUserPrompt] = useState('');
   const [refinedPrompt, setRefinedPrompt] = useState('');
   const [mode, setMode] = useState<Mode>('quick');
+  const [targetModel, setTargetModel] = useState<TargetModel>('Generic-LLM');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +61,7 @@ function App() {
     setError(null);
     setRefinedPrompt('');
     try {
-      const result = await refinePrompt(userPrompt, currentLang, mode);
+      const result = await refinePrompt(userPrompt, currentLang, mode, targetModel);
       setRefinedPrompt(result);
       // Add to history
       const newHistoryItem: HistoryItem = {
@@ -75,7 +76,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [userPrompt, currentLang, mode, t]);
+  }, [userPrompt, currentLang, mode, targetModel, t]);
 
   const handleSavePrompt = useCallback(() => {
     if (!refinedPrompt.trim()) return;
@@ -120,6 +121,8 @@ function App() {
                 setUserPrompt={setUserPrompt}
                 mode={mode}
                 setMode={setMode}
+                targetModel={targetModel}
+                setTargetModel={setTargetModel}
                 onRefine={handleRefine}
                 isLoading={isLoading}
                 t={t}

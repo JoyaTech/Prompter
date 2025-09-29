@@ -22,6 +22,11 @@ const translations = {
     history: 'History',
     error_generic: 'An error occurred. Please try again.',
     error_empty_prompt: 'Please enter a prompt to refine.',
+    target_model_label: 'Optimize for:',
+    model_generic: 'Generic LLM',
+    model_gemini_ultra: 'Gemini-Ultra',
+    model_code_interpreter: 'Code-Interpreter',
+    model_imagen: 'Imagen',
   },
   he: {
     app_title: 'FlowIt - מזקק פרומפטים',
@@ -43,6 +48,11 @@ const translations = {
     history: 'היסטוריה',
     error_generic: 'אירעה שגיאה. אנא נסה שוב.',
     error_empty_prompt: 'אנא הכנס פרומפט לזיקוק.',
+    target_model_label: 'בצע אופטימיזציה עבור:',
+    model_generic: 'LLM גנרי',
+    model_gemini_ultra: 'Gemini-Ultra',
+    model_code_interpreter: 'Code-Interpreter',
+    model_imagen: 'Imagen',
   },
 };
 
