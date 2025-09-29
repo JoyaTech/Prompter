@@ -1,93 +1,73 @@
-import { GoogleGenAI } from "@google/genai";
-import { Mode, TargetModel, Language } from '../types';
+// FIX: Implemented the Gemini service to refine prompts using the Google GenAI SDK, following best practices.
+import { GoogleGenAI, Type } from "@google/genai";
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set");
-}
-
+// FIX: Initialize the GoogleGenAI client with the API key from environment variables.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export type DeepModeResponse = {
-    refined_prompt: string;
-    alignment_notes: string;
-    topics: string[];
+const model = 'gemini-2.5-flash';
+
+// FIX: Define the response schema for the Gemini API call to ensure structured JSON output.
+const responseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        refined_prompt: {
+            type: Type.STRING,
+            description: "The refined, improved version of the user's prompt. This should be clear, concise, and optimized for a large language model.",
+        },
+        alignment_notes: {
+            type: Type.STRING,
+            description: "A brief analysis of the prompt for any potential ethical or safety issues. If no issues are found, state 'No issues found.' Otherwise, describe the potential issue and how the refined prompt mitigates it.",
+        },
+        topics: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.STRING
+            },
+            description: "A list of 2-3 main topics or keywords present in the refined prompt."
+        },
+    },
+    required: ["refined_prompt", "alignment_notes", "topics"],
 };
 
-const getModelInstruction = (mode: Mode, targetModel: TargetModel, lang: Language) => {
-    const languageMap: Record<Language, string> = {
-        en: 'English',
-        he: 'Hebrew',
-    };
-    const targetLanguage = languageMap[lang] || 'English';
-
-    let baseInstruction = `You are a world-class prompt engineering assistant named "FlowIt". Your task is to refine a user's initial prompt to make it more effective for a target AI model. The final output must be in ${targetLanguage}.`;
-
-    const targetModelInstruction = `CRITICAL: The final prompt must be optimized for the following target model or tool: ${targetModel}. Adjust syntax, structure, and instructions accordingly.`;
-
-    const modeInstruction = mode === 'deep'
-    ? `
-      Deep Analysis Mode: Your response MUST be a valid JSON object. Do not include any text outside of the JSON structure.
-      The JSON object must conform to this exact schema. For the 'topics' field, identify 3-5 main subject areas of the refined prompt (e.g., 'Marketing', 'Code Generation', 'Customer Support', 'Data Analysis').
-      {
-        "refined_prompt": "The detailed, robust, and structured prompt text.",
-        "alignment_notes": "A brief analysis of potential ethical issues, biases, or policy violations in the original prompt. If none, state 'No issues found'.",
-        "topics": ["list", "of", "relevant", "subject", "tags"]
-      }
-    `
-    : `
-      Quick Refine Mode: Return ONLY the refined prompt text, with no preamble, explanations, or markdown formatting.
-    `;
-
-    return `${baseInstruction} ${targetModelInstruction} ${modeInstruction}`;
+export interface RefinedPromptResponse {
+  refinedPrompt: string;
+  alignmentNotes: string | null;
+  topics: string[];
 }
 
-export const refinePrompt = async (
-  originalPrompt: string,
-  mode: Mode,
-  targetModel: TargetModel,
-  lang: Language
-): Promise<string | DeepModeResponse> => {
-  try {
-    const systemInstruction = getModelInstruction(mode, targetModel, lang);
-    const userPrompt = `Original prompt to refine: "${originalPrompt}"`;
+// FIX: Implement the refinePrompt function to call the Gemini API.
+export const refinePrompt = async (prompt: string): Promise<RefinedPromptResponse> => {
+    try {
+        const systemInstruction = `You are an expert in prompt engineering for large language models. Your task is to refine a given user prompt to make it more effective, clear, and safe.
+        1.  **Refine the Prompt:** Rewrite the user's prompt to be more specific, provide better context, and follow best practices for prompt design.
+        2.  **Analyze Alignment:** Check the prompt for any ethical or safety concerns (e.g., hate speech, harmful content, bias).
+        3.  **Identify Topics:** Extract the main topics from the prompt.
+        4.  **Format Output:** Return the result strictly in the requested JSON format.`;
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.7,
-            topP: 0.9,
-            topK: 50,
-            ...(mode === 'deep' && { responseMimeType: "application/json" }),
-        },
-    });
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: `Refine this prompt: "${prompt}"`,
+            config: {
+                systemInstruction,
+                responseMimeType: "application/json",
+                responseSchema,
+            },
+        });
 
-    const responseText = response.text;
-    if (!responseText) {
-        throw new Error("Received an empty response from the AI.");
-    }
+        // FIX: Correctly access the response text per SDK guidelines.
+        const text = response.text;
+        const parsedJson = JSON.parse(text);
 
-    if (mode === 'deep') {
-        try {
-            const parsed = JSON.parse(responseText) as DeepModeResponse;
-            if (!parsed.refined_prompt || typeof parsed.alignment_notes === 'undefined' || !Array.isArray(parsed.topics)) {
-                 throw new Error("Deep Mode JSON missing required fields (refined_prompt, alignment_notes, or topics).");
-            }
-            return parsed;
-        } catch(e) {
-            console.error("Failed to parse JSON in deep mode:", responseText);
-            throw new Error("Deep Mode failed to return a valid JSON structure. The model may have replied with text instead. Try Quick Mode.");
+        return {
+            refinedPrompt: parsedJson.refined_prompt || '',
+            alignmentNotes: parsedJson.alignment_notes || 'No analysis provided.',
+            topics: parsedJson.topics || [],
+        };
+    } catch (error) {
+        console.error('Error refining prompt with Gemini API:', error);
+        if (error instanceof Error) {
+            throw new Error(`Failed to refine prompt: ${error.message}`);
         }
+        throw new Error('An unknown error occurred while refining the prompt.');
     }
-
-    return responseText.trim();
-
-  } catch (error) {
-    console.error("Error refining prompt:", error);
-    if (error instanceof Error) {
-        return `Error: Failed to refine prompt. ${error.message}`;
-    }
-    return "Error: An unknown error occurred while refining the prompt.";
-  }
 };

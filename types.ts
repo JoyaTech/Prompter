@@ -1,9 +1,5 @@
+// FIX: Defined the necessary types for the application based on their usage in other components.
 export type Language = 'en' | 'he';
-
-export type Mode = 'quick' | 'deep';
-
-export type TargetModel = 'Generic-LLM' | 'Gemini-Ultra' | 'Code-Interpreter' | 'Imagen';
-
 export type Page = 'editor' | 'dashboard';
 
 export interface Prompt {
@@ -17,6 +13,6 @@ export interface HistoryItem {
   prompt: string;
   response: string;
   timestamp: Date;
-  alignment_notes?: string; // For Ethical & Compliance Audit MVP
-  topics?: string[]; // For Dashboard Analytics
+  alignment_notes: string | null;
+  topics: string[];
 }
