@@ -1,4 +1,5 @@
-export type Page = 'editor' | 'dashboard' | 'theme';
+
+export type Page = 'editor' | 'dashboard' | 'theme' | 'challenge';
 
 export interface Prompt {
   id: string;
@@ -12,6 +13,8 @@ export interface HistoryItem {
   response: string;
   timestamp: Date;
   alignment_notes?: string;
+  rating?: number;
+  feedback?: string;
 }
 
 export interface TemplateFields {
@@ -43,4 +46,14 @@ export interface Theme {
   textSecondary: string;
   accent: string;
   border: string;
+}
+
+export interface PredefinedTheme extends Theme {
+  name: string;
+}
+
+export interface Challenge {
+  id: number;
+  title: string;
+  description: string;
 }

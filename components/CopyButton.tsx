@@ -1,5 +1,5 @@
+
 import React, { useState } from 'react';
-// FIX: Corrected import path to be relative.
 import { CopyIcon, CheckIcon } from './icons';
 
 interface CopyButtonProps {
@@ -25,7 +25,7 @@ function CopyButton({ textToCopy }: CopyButtonProps): React.ReactElement {
       className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 ${
         isCopied
           ? 'bg-green-600/20 text-green-400'
-          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+          : 'bg-card-secondary text-text-secondary hover:bg-border-color hover:text-text-main'
       }`}
     >
       {isCopied ? (

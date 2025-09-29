@@ -1,0 +1,38 @@
+
+[
+  {
+    "id": 1,
+    "title": "The Last Astronaut's Log",
+    "description": "Craft a prompt that generates a log entry from an astronaut who has just discovered they are the last human alive."
+  },
+  {
+    "id": 2,
+    "title": "A Detective with a Sweet Tooth",
+    "description": "Generate a short story opening about a hard-boiled detective who solves crimes using clues related to candy and desserts."
+  },
+  {
+    "id": 3,
+    "title": "The Sentient Toaster's Demands",
+    "description": "Write a prompt that generates a list of demands from a newly sentient toaster who is unhappy with the quality of bread it's being given."
+  },
+  {
+    "id": 4,
+    "title": "Historical Figure in Modern Times",
+    "description": "Craft a prompt that generates a social media post from a famous historical figure (e.g., Cleopatra, Shakespeare) reacting to a modern trend."
+  },
+  {
+    "id": 5,
+    "title": "Cyberpunk Potion Shop",
+    "description": "Generate a description of a potion shop in a cyberpunk city. What kind of digital spells and elixirs does it sell?"
+  },
+  {
+    "id": 6,
+    "title": "Explain to a Child",
+    "description": "Write a prompt that explains a complex scientific concept (like black holes or DNA) in a way a five-year-old can understand."
+  },
+  {
+    "id": 7,
+    "title": "The Alien Tourist Review",
+    "description": "Craft a prompt that generates a hilariously bad online review of Earth written by an alien tourist."
+  }
+]
