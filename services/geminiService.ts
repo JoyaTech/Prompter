@@ -1,54 +1,86 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { TemplateFields } from '../types';
 
-// FIX: Initialized GoogleGenAI with apiKey from environment variables as required.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-
-export async function generateContent(prompt: string) {
-  // FIX: Switched to the recommended 'gemini-2.5-flash' model and used the correct API call structure.
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-  });
-  return response;
+// Per instructions, API key must be from process.env.API_KEY
+if (!process.env.API_KEY) {
+    // In a real app, you might want to show a more user-friendly error
+    // but for this context, throwing an error is sufficient.
+    throw new Error("API_KEY environment variable not set");
 }
 
-export function constructPromptFromTemplate(fields: TemplateFields, additionalInstructions: string): string {
-  let prompt = '';
-  if (fields.role) prompt += `Role: ${fields.role}\n`;
-  if (fields.task) prompt += `Task: ${fields.task}\n`;
-  if (fields.context) prompt += `Context: ${fields.context}\n`;
-  if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n`;
-  if (additionalInstructions) prompt += `\nAdditional Instructions:\n${additionalInstructions}`;
-  
-  return prompt.trim();
-}
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export async function analyzeAlignment(prompt: string, response: string): Promise<string> {
+/**
+ * Generates content using the Gemini model.
+ * @param prompt The text prompt to send to the model.
+ * @returns The generated content response.
+ */
+export const generateContent = async (prompt: string): Promise<GenerateContentResponse> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        return response;
+    } catch (error) {
+        console.error("Error generating content:", error);
+        throw new Error("Failed to generate content from Gemini API.");
+    }
+};
+
+/**
+ * Constructs a detailed prompt from a template.
+ * @param fields The structured prompt fields.
+ * @param additionalInstructions Any extra freeform instructions.
+ * @returns A formatted prompt string.
+ */
+export const constructPromptFromTemplate = (fields: TemplateFields, additionalInstructions: string): string => {
+    let prompt = "";
+    if (fields.role) prompt += `Role: ${fields.role}\n\n`;
+    if (fields.task) prompt += `Task: ${fields.task}\n\n`;
+    if (fields.context) prompt += `Context: ${fields.context}\n\n`;
+    if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n\n`;
+    if (additionalInstructions) prompt += `Additional Instructions: ${additionalInstructions}\n\n`;
+    
+    return prompt.trim();
+};
+
+
+/**
+ * Analyzes the alignment of a response to its prompt.
+ * This is a meta-prompt that asks the model to evaluate itself.
+ * @param prompt The original prompt.
+ * @param response The model's response.
+ * @returns A string with alignment notes.
+ */
+export const analyzeAlignment = async (prompt: string, response: string): Promise<string> => {
     const analysisPrompt = `
-      Analyze the alignment between the following prompt and its generated response.
-      Provide a brief, one-sentence summary of how well the response adheres to the prompt's instructions, constraints, and intent.
-      Focus on identifying any deviations, omissions, or misunderstandings.
+        Analyze the alignment between the following prompt and response.
+        - Does the response directly address the user's prompt?
+        - Does it follow all instructions and constraints?
+        - Is the tone and format appropriate?
+        Provide a brief, one-sentence summary of your findings.
 
-      **Prompt:**
-      ${prompt}
+        --- PROMPT ---
+        ${prompt}
 
-      **Response:**
-      ${response}
-
-      **Alignment Analysis:**
+        --- RESPONSE ---
+        ${response}
     `;
 
     try {
-        // FIX: Used the correct generateContent API call and model.
         const analysisResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: "gemini-2.5-flash",
             contents: analysisPrompt,
+            config: {
+                systemInstruction: "You are an expert in evaluating AI model responses for quality and alignment with user prompts.",
+                temperature: 0.2,
+            }
         });
-        // FIX: Correctly extracted text from the response object.
-        return analysisResponse.text;
+        // FIX: Use .text property to get the string content from the response
+        return analysisResponse.text.trim();
     } catch (error) {
-        console.error("Alignment analysis failed:", error);
+        console.error("Error analyzing alignment:", error);
         return "Could not analyze alignment.";
     }
-}
+};

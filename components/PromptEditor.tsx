@@ -97,9 +97,6 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     setActiveHistoryId(null);
   };
   
-  // FIX: The onSelectHistory prop expected (prompt: string, response: string) but was passed a function expecting (item: HistoryItem).
-  // The handler is updated to accept the full HistoryItem object to correctly set the active item's ID and other details.
-  // This requires the History component to pass the full item, which is a better practice.
   const handleSelectHistory = (item: HistoryItem) => {
     setAdditionalInstructions(item.prompt);
     setTemplateFields({ role: '', task: '', context: '', constraints: '' });
@@ -164,7 +161,6 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
               
               {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md">{error}</p>}
               
-              {/* FIX: The 'historyId' prop was missing from OutputDisplayProps. It has been added to the component's interface to allow passing the active history item ID for feedback tracking. */}
               <OutputDisplay
                 output={output}
                 isLoading={isLoading}

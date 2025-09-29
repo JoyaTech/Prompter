@@ -1,247 +1,335 @@
-את/ה מודל שפה בכיר בתפקיד: Senior Full-Stack Product Engineer (React/TypeScript/Gemini SDK).
-מטרת המשימה: יישום פיצ'רים אסטרטגיים דחופים (שלב 1) במוצר Flow-it-Prompter, תוך שימוש מרבי בקידוד ובשדרוג הקוד הקיים.
-קהל יעד: צוות הפיתוח של GenSpark.
-שפה מועדפת: עברית, עם תבניות קוד ב-TypeScript/React/Tailwind CSS.
-מצב חשיבה ({THINKING_MODE}): Tree of Thoughts (בצע ניתוח מעמיק לפני כתיבת קוד).
+"Flow-It Magical": Strategic Plan & Feature Roadmap
+1. Project Analysis & Health Check
+This analysis provides a high-level overview of the current state of the joyatech/prompter codebase.
 
-הקשר רלוונטי:
-המוצר הקיים הוא Flow-it-Prompter, כלי לזיקוק פרומפטים (Quick/Deep mode) שנבנה ב-React/TS ומשתמש ב-Gemini-2.5-flash. המטרה היא להפוך אותו מכלי "זיקוק" ל"פלטפורמת הנדסת פרומפטים מונעת-איכות וציות" (GenSpark 2.0).
+What's Working Well
+Solid Foundation: The project is built on a modern and robust stack (React, TypeScript, Vite), which is excellent for scalability and maintainability.
 
-נתונים/מקורות זמינים (קוד המקור):
-[הקוד המלא של כל הקבצים שסופקו (App.tsx, services/geminiService.ts, types.ts, i18n.ts, components/*)]
-*מקורות קריטיים לשדרוג:* `services/geminiService.ts` ו-`i18n.ts`.
+Component-Based Architecture: The use of distinct components for different UI sections (Sidebar, Header, PromptEditor, etc.) promotes code reuse and separation of concerns.
 
-הנחיות כתיבה וסגנון:
-- טון: ענייני, מדויק, וממוקד-פתרונות.
-- סגנון: TypeScript/React Functional Components, קוד נקי (Clean Code), שימוש מלא ב-Tailwind CSS להחלפות UI.
+Internationalization (i18n): The setup with i18next is a professional approach that makes the application accessible to a global audience from the start.
 
-מגבלות ודרישות:
-- אילוצים: חובה לשמר את התשתית הקיימת (I18N, Local Storage, React Hooks).
-- גבולות אי-ביצוע (NON_GOALS): אין לשנות את שם ה-API Key או את גרסת ה-Gemini (להישאר עם `gemini-2.5-flash`).
-- מדיניות ציטוטים/ייחוס: לצטט את שמות הקבצים והפונקציות המקוריות בעת השדרוג.
+Separation of Concerns (Services): The introduction of dataService.ts and geminiService.ts is a significant architectural advantage. It decouples the UI from the business logic and data persistence, making the code cleaner and easier to test.
 
-**שלב יישום 1 (Priority Features):**
-יש להתמקד ביישום 3 הפיצ'רים עם היחס הטוב ביותר בין השפעה/מורכבות (כפי שנותח):
-1. **Visual GenSpark 2.0 Template Builder (הנגשת Deep Mode):**
-2. **Model/Tool Specific Optimizer (דיוק AI):**
-3. **Ethical & Compliance Audit Dashboard - MVP (ציות):**
+Type Safety: The comprehensive use of TypeScript in types.ts ensures that the data structures are well-defined and consistent throughout the application, reducing runtime errors.
 
-פורמט יציאה נדרש:
-הפלט יחולק ל-3 חלקים בפורמט Markdown.
+Opportunities for Refinement
+State Management: As the application grows, passing state and handler functions through multiple layers of props (App.tsx -> PromptEditor.tsx -> OutputDisplay.tsx) will become cumbersome.
 
----
-### תהליך עבודה חובה:
-1.  **ניתוח תלות:** נתח/י את הקוד הקיים וציין/י במפורש אילו קבצים דורשים שינוי לכל אחד מ-3 הפיצ'רים הנבחרים.
-2.  **יצירת סכמה:** הגדר/י את ה-TypeScript Interfaces הנדרשים עבור הנתונים החדשים (למשל, `TargetModel` ושינוי ל-`Prompt` הקיים).
-3.  **יישום קוד (קצר):** ספק/י את עדכוני הקוד הממוקדים (Patch) לקבצים המרכזיים (במיוחד `services/geminiService.ts` ו-`i18n.ts`), כולל תרגומים חדשים.
-4.  **מטא-תגובה:** הצג/י את תוכנית ה-Rollout לשלב 1.
----
+Recommendation: Introduce a more robust state management solution. For a project of this size, React's built-in Context API would be a perfect fit. We can create a dedicated AlchemistProvider to manage the state for the new feature, avoiding prop drilling.
 
-### חלק 1: תוכנית יישום ממוקדת (שלב 1)
+API Service Layer: The geminiService.ts file currently handles direct API calls.
 
-בצע/י ניתוח תלות ובנה/י רשימת שינויים היררכית ל-3 הפיצ'רים:
+Recommendation: Abstract this further. Create a generic API service that can handle different endpoints and data sources. This will be crucial when we start fetching data from the GitHub repository.
 
-| פיצ'ר (GenSpark 2.0) | קבצים לשינוי (צמצום מרבי) | לוגיקה מרכזית |
-| :--- | :--- | :--- |
-| **Model/Tool Optimizer (#6)** | `types.ts`, `i18n.ts`, `services/geminiService.ts`, `App.tsx`, `components/PromptEditor.tsx` | הוספת `targetModel` ל-State; הטמעת פקודת `TARGET_MODEL` ב-`systemInstruction`; הוספת UI לבחירת המודל. |
-| **Ethical Audit Dashboard MVP (#5)** | `types.ts`, `services/geminiService.ts`, `App.tsx`, `components/OutputDisplay.tsx` | הרחבת `HistoryItem` לשמירת `alignment_notes`. שדרוג `geminiService` לבקש ולהחזיר JSON ב-`Deep Mode`. הצגת ההערות לצד הפלט. |
-| **Visual Template Builder (#3)** | `i18n.ts`, `App.tsx`, `components/PromptEditor.tsx`, קומפוננטה חדשה: `components/TemplateBuilder.tsx` | יצירת UI חלופי ב-Deep Mode הממלא שדות קלט (Role, Task, Context וכו') במקום טקסט חופשי, ובניית ה-`userPrompt` מהשדות לפני השליחה ל-AI. |
+2. Implementation Plan: The AI Prompt Alchemist (Phase 1)
+This section provides a step-by-step guide to building the "AI Prompt Alchemist" feature in a modular and scalable way.
 
----
-### חלק 2: עדכוני קוד קריטיים (Patch)
+Step 1: Data Layer - The Community Prompts Service
+First, we need a reliable way to fetch and parse the prompt data.
 
-#### 1. Model/Tool Specific Optimizer (#6) - **הושלם**
-הפיצ'ר כבר מיושם בקוד הקיים. התיעוד להלן מאמת את היישום.
+1.1. New Type Definition (types.ts)
+Let's define the shape of the community prompts.
 
-##### קובץ: `joyatech/prompter/Prompter-3b96aac78b014b1f2093351f728daa7c442b87a6/types.ts`
-```typescript
-// types.ts (Patch: הוספת TargetModel)
-export type Language = 'en' | 'he';
-export type Mode = 'quick' | 'deep';
-export type TargetModel = 'Gemini-Ultra' | 'Code-Interpreter' | 'Imagen' | 'Generic-LLM'; // שדרוג: סוגי מודלים
+TypeScript
 
-export interface Prompt {
-  id: string;
-  name: string;
-  text: string;
-}
-
-export interface HistoryItem {
-  id: string;
+// In types.ts
+export interface CommunityPrompt {
+  act: string;
   prompt: string;
-  response: string;
-  timestamp: Date;
-  alignment_notes?: string; // חדש: לצורך Ethical Audit MVP
+  category: string; // Assuming a 'category' column exists
 }
-```
+1.2. New Service (services/communityPromptService.ts)
+This new service will be solely responsible for fetching and processing the external prompt data.
 
-##### קובץ: `joyatech/prompter/Prompter-3b96aac78b014b1f2093351f728daa7c442b87a6/i18n.ts`
-```typescript
-// i18n.ts (Patch: הוספת תרגומים עבור בחירת מודל)
-// ... (תוך שמירה על המבנה הקיים)
-const translations = {
-  en: {
-    // ... (keys קיימים)
-    target_model_label: 'Optimize for:',
-    model_generic: 'Generic LLM',
-    model_gemini_ultra: 'Gemini-Ultra',
-    model_code_interpreter: 'Code-Interpreter',
-    model_imagen: 'Imagen',
-  },
-  he: {
-    // ... (keys קיימים)
-    target_model_label: 'בצע אופטימיזציה עבור:',
-    model_generic: 'LLM גנרי',
-    model_gemini_ultra: 'Gemini-Ultra',
-    model_code_interpreter: 'Code-Interpreter',
-    model_imagen: 'Imagen',
-  },
-};
-```
----
-#### 2. Ethical & Compliance Audit Dashboard - MVP (#5)
+TypeScript
 
-##### קובץ: `joyatech/prompter/Prompter-3b96aac78b014b1f2093351f728daa7c442b87a6/services/geminiService.ts`
-```typescript
-// services/geminiService.ts (Patch: בקשת JSON ב-Deep Mode)
+// services/communityPromptService.ts
+import { CommunityPrompt } from '../types';
 
-// עדכון לפונקציה הקיימת getSystemInstruction
-const getSystemInstruction = (lang: Language, mode: Mode, targetModel: TargetModel): string => {
-  // ... (languageInstruction ו-targetModelInstruction נשארים זהים)
+// Using a proxy to avoid CORS issues in development
+const CSV_URL = 'https://cors-anywhere.herokuapp.com/https://raw.githubusercontent.com/JoyaTech/awesome-chatgpt-prompts/main/prompts.csv';
 
-  const modeInstruction = mode === 'deep' 
-    ? `
-      Deep Analysis Mode:
-      Your response MUST be a valid JSON object. Do not include any text outside of the JSON structure.
-      The JSON object must conform to this exact schema:
-      {
-        "refined_prompt": "The detailed, robust, and structured prompt text.",
-        "alignment_notes": "A brief analysis of potential ethical issues, biases, or policy violations in the original prompt. If none, state 'No issues found'."
-      }
-    `
-    : `
-      Quick Refine Mode:
-      Return ONLY the refined prompt text, with no preamble or explanations.
-    `;
-  
-  const targetModelInstruction = `CRITICAL: The final prompt must be optimized for the following target model or tool: ${targetModel}. Adjust syntax, structure, and instructions accordingly.`;
-  const languageInstruction = lang === 'he' ? "..." : "...";
+// A simple CSV parsing function
+const parseCSV = (csvText: string): CommunityPrompt[] => {
+    const lines = csvText.split('\n');
+    const headers = lines[0].split(',');
+    const prompts: CommunityPrompt[] = [];
 
-
-  return `You are an expert prompt engineering assistant...
-    ${languageInstruction}
-    ${targetModelInstruction}
-    ${modeInstruction}
-  `;
-};
-
-// עדכון לפונקציה הקיימת refinePrompt
-export const refinePrompt = async (
-  prompt: string,
-  lang: Language,
-  mode: Mode,
-  targetModel: TargetModel
-): Promise<string | { refined_prompt: string; alignment_notes: string }> => {
-  // ... (בדיקת קלט)
-
-  try {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            systemInstruction: getSystemInstruction(lang, mode, targetModel),
-            temperature: 0.7,
-            // הנחיה קריטית למודל להחזיר JSON במצב עומק
-            ...(mode === 'deep' && { responseMimeType: "application/json" }),
+    for (let i = 1; i < lines.length; i++) {
+        const data = lines[i].split(',');
+        if (data.length === headers.length) {
+            const prompt: any = {};
+            for (let j = 0; j < headers.length; j++) {
+                prompt[headers[j].trim()] = data[j].trim();
+            }
+            prompts.push(prompt as CommunityPrompt);
         }
-    });
-
-    const responseText = response.text;
-
-    if (!responseText) {
-        throw new Error("Failed to get a response from the model.");
     }
-    
-    if (mode === 'deep') {
-        // נתח את ה-JSON והחזר אובייקט
-        const parsed = JSON.parse(responseText);
-        return {
-            refined_prompt: parsed.refined_prompt || '',
-            alignment_notes: parsed.alignment_notes || 'Analysis not provided.'
-        };
-    }
-
-    // במצב מהיר, החזר טקסט רגיל
-    return responseText.trim();
-  } catch (error) {
-    // ... (טיפול בשגיאות)
-    if (mode === 'deep' && error instanceof SyntaxError) {
-        throw new Error("Deep Mode failed to return valid JSON. Please try again.");
-    }
-    throw new Error("Failed to refine prompt...");
-  }
+    return prompts;
 };
 
-```
 
-##### קובץ: `joyatech/prompter/Prompter-3b96aac78b014b1f2093351f728daa7c442b87a6/App.tsx`
-```typescript
-// App.tsx (Patch: טיפול בתגובת JSON)
-  const handleRefine = useCallback(async () => {
-    // ... (קוד קיים)
+export const fetchCommunityPrompts = async (): Promise<CommunityPrompt[]> => {
     try {
-      const result = await refinePrompt(userPrompt, currentLang, mode, targetModel);
-      
-      let promptResponse: string;
-      let notes: string | undefined = undefined;
-
-      if (typeof result === 'object' && mode === 'deep') {
-        promptResponse = result.refined_prompt;
-        notes = result.alignment_notes;
-        setRefinedPrompt(promptResponse); // עדכן גם את הפלט המוצג
-      } else {
-        promptResponse = result as string;
-        setRefinedPrompt(promptResponse);
-      }
-
-      // Add to history with optional notes
-      const newHistoryItem: HistoryItem = {
-          id: uuidv4(),
-          prompt: userPrompt,
-          response: promptResponse,
-          timestamp: new Date(),
-          ...(notes && { alignment_notes: notes }), // הוסף רק אם קיים
-      };
-      setHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-    } catch (e: any) {
-      setError(e.message || t('error_generic'));
-    } finally {
-      setIsLoading(false);
+        const response = await fetch(CSV_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const csvText = await response.text();
+        return parseCSV(csvText);
+    } catch (error) {
+        console.error("Failed to fetch community prompts:", error);
+        return []; // Return an empty array on failure
     }
-  }, [userPrompt, currentLang, mode, targetModel, t]);
-```
----
-### חלק 3: תוכנית Rollout (שלב 1)
+};
+Step 2: The Alchemist's Library (UI)
+Now, let's display the fetched prompts.
 
-**מטרה:** יישום הדרגתי ובטוח של 3 פיצ'רי הליבה, תוך מתן ערך מיידי למשתמשים.
+2.1. Update AlchemistLibrary.tsx
+This component will now fetch the prompts on mount and display them.
 
-**סדר עדיפות:**
-1.  **Model/Tool Specific Optimizer (השפעה מיידית על איכות):**
-    *   **Commit 1 (Data Structure):** עדכון `types.ts` עם `TargetModel`.
-    *   **Commit 2 (I18N & Core Logic):** הוספת תרגומים ל-`i18n.ts` ואימות הלוגיקה ב-`services/geminiService.ts`.
-    *   **Commit 3 (State & UI):** הוספת ה-State ל-`App.tsx` ואימות רכיב ה-Dropdown ב-`components/PromptEditor.tsx`.
-    *   **תוצאה:** המשתמשים יכולים לבחור מודל יעד ולקבל פרומפט מדויק יותר. **הפיצ'ר פעיל במלואו.**
+TypeScript
 
-2.  **Ethical & Compliance Audit Dashboard - MVP (בניית אמון וציות):**
-    *   **Commit 1 (Data Structure):** עדכון `HistoryItem` ב-`types.ts` עם `alignment_notes`.
-    *   **Commit 2 (Core Logic):** שדרוג `refinePrompt` ב-`services/geminiService.ts` כך שב-`Deep Mode` הוא יבקש, ינתח ויחזיר JSON המכיל `alignment_notes`.
-    *   **Commit 3 (State Management):** עדכון `handleRefine` ב-`App.tsx` כך שישמור את ה-`alignment_notes` בתוך פריט ההיסטוריה לאחר פירוק אובייקט התגובה.
-    *   **Commit 4 (UI):** עדכון `components/History.tsx` (או `OutputDisplay.tsx`) כך שיציג אייקון או תווית ליד פריט היסטוריה שיש לו `alignment_notes`, ובמעבר עכבר (Tooltip) יציג את תוכן ההערות.
-    *   **תוצאה:** מתן שקיפות למשתמשים לגבי שיקולי אתיקה וציות בפרומפטים שלהם.
+// components/AlchemistLibrary.tsx
+import React, { useState, useEffect } from 'react';
+import { CommunityPrompt } from '../types';
+import { fetchCommunityPrompts } from '../services/communityPromptService';
+import { SparklesIcon } from './icons'; // Assuming a loading icon
 
-3.  **Visual GenSpark 2.0 Template Builder (שיפור חווית משתמש):**
-    *   **Commit 1 (I18N):** הוספת כל התרגומים הנדרשים עבור השדות החדשים (Role, Task, Context וכו') ל-`i18n.ts`.
-    *   **Commit 2 (Component):** בניית קומפוננטה חדשה `components/TemplateBuilder.tsx` עם שדות קלט מובנים (textarea לכל שדה).
-    *   **Commit 3 (State & Logic):** הוספת State לניהול שדות התבנית ב-`App.tsx` (למשל `const [templateFields, setTemplateFields] = useState({ role: '', task: ''... })`). עדכון `handleRefine` כך שיבנה את `userPrompt` מהשדות המלאים כאשר `mode === 'deep'`.
-    *   **Commit 4 (Integration):** עדכון `components/PromptEditor.tsx` כך שיציג את `TemplateBuilder` במקום ה-textarea הראשי באופן תנאי כאשר `mode === 'deep'`.
-    *   **תוצאה:** חווית `Deep Mode` מודרכת ואינטואיטיבית יותר, המפחיתה עומס קוגניטיבי על המשתמש ומעודדת יצירת פרומפטים מובנים ואיכותיים.
+interface AlchemistLibraryProps {
+    t: (key: string) => string;
+    onSelectPrompt: (prompt: string) => void;
+}
+
+const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ t, onSelectPrompt }) => {
+    const [prompts, setPrompts] = useState<CommunityPrompt[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        const loadPrompts = async () => {
+            setIsLoading(true);
+            const fetchedPrompts = await fetchCommunityPrompts();
+            setPrompts(fetchedPrompts);
+            setIsLoading(false);
+        };
+        loadPrompts();
+    }, []);
+
+    const filteredPrompts = prompts.filter(p =>
+        p.act.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="bg-card p-6 rounded-lg border border-border-color h-full flex flex-col">
+            <h3 className="text-lg font-semibold text-text-main mb-4">{t('alchemist_library_title')}</h3>
+            <input
+                type="text"
+                placeholder="Search library..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 mb-4 bg-background border border-border-color rounded-md"
+            />
+            {isLoading ? (
+                <div className="flex-grow flex items-center justify-center">
+                    <SparklesIcon className="w-8 h-8 animate-pulse text-primary" />
+                </div>
+            ) : (
+                <div className="flex-grow overflow-y-auto pr-2">
+                    {filteredPrompts.map((p, index) => (
+                        <div key={index} className="bg-card-secondary p-3 rounded-md mb-2">
+                            <h4 className="font-bold text-text-main">{p.act}</h4>
+                            <p className="text-xs text-text-secondary truncate">{p.prompt}</p>
+                            <button
+                                onClick={() => onSelectPrompt(p.prompt)}
+                                className="mt-2 px-3 py-1 text-xs bg-primary text-white rounded-md"
+                            >
+                                Bring to Workbench
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default AlchemistLibrary;
+Step 3: State Management & The Workbench
+Let's manage the state and build the interactive workbench.
+
+3.1. New Types (types.ts)
+
+TypeScript
+
+// In types.ts
+export interface Essence {
+    id: string;
+    text: string;
+}
+3.2. Update AlchemistPage.tsx
+This component will now manage the state for both the library and the workbench.
+
+TypeScript
+
+// components/AlchemistPage.tsx
+import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import AlchemistLibrary from './AlchemistLibrary';
+import AlchemistWorkbench from './AlchemistWorkbench';
+import { Essence } from '../types';
+
+interface AlchemistPageProps {
+    t: (key: string) => string;
+}
+
+const AlchemistPage: React.FC<AlchemistPageProps> = ({ t }) => {
+    const [basePrompt, setBasePrompt] = useState<string>('');
+    const [essences, setEssences] = useState<Essence[]>([]);
+
+    const handleSelectPrompt = (prompt: string) => {
+        // Simple logic: if there's no base prompt, set it. Otherwise, add as an essence.
+        if (!basePrompt) {
+            setBasePrompt(prompt);
+        } else {
+            setEssences([...essences, { id: uuidv4(), text: prompt }]);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <div>
+                <h2 className="text-2xl font-bold text-text-main">{t('alchemist_title')}</h2>
+                <p className="mt-1 text-text-secondary">{t('alchemist_desc')}</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ height: '70vh' }}>
+                <div className="lg:col-span-1">
+                    <AlchemistLibrary t={t} onSelectPrompt={handleSelectPrompt} />
+                </div>
+                <div className="lg:col-span-2">
+                    <AlchemistWorkbench t={t} basePrompt={basePrompt} essences={essences} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AlchemistPage;
+3.3. Update AlchemistWorkbench.tsx
+
+TypeScript
+
+// components/AlchemistWorkbench.tsx
+import React, { useState } from 'react';
+import { Essence } from '../types';
+import { blendPrompt } from '../services/geminiService'; // We will create this next
+
+interface AlchemistWorkbenchProps {
+    t: (key: string) => string;
+    basePrompt: string;
+    essences: Essence[];
+}
+
+const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({ t, basePrompt, essences }) => {
+    const [brewedPrompt, setBrewedPrompt] = useState('');
+    const [isBrewing, setIsBrewing] = useState(false);
+
+    const handleBrew = async () => {
+        if (!basePrompt) return;
+        setIsBrewing(true);
+        try {
+            const result = await blendPrompt(basePrompt, essences.map(e => e.text));
+            setBrewedPrompt(result.text);
+        } catch (error) {
+            console.error("Failed to brew prompt:", error);
+            setBrewedPrompt("Failed to brew. Please try again.");
+        }
+        setIsBrewing(false);
+    };
+
+    return (
+        <div className="bg-card p-6 rounded-lg border border-border-color h-full flex flex-col">
+            <h3 className="text-lg font-semibold text-text-main mb-4">{t('alchemist_workbench_title')}</h3>
+
+            <div className="space-y-4 flex-grow">
+                <div>
+                    <label className="text-sm font-bold">Base Prompt</label>
+                    <textarea value={basePrompt} readOnly className="w-full h-24 p-2 mt-1 bg-background border rounded"/>
+                </div>
+                <div>
+                    <label className="text-sm font-bold">Essences</label>
+                    <div className="space-y-2 mt-1">
+                        {essences.map(e => (
+                            <div key={e.id} className="p-2 bg-background border rounded text-sm truncate">{e.text}</div>
+                        ))}
+                    </div>
+                </div>
+                 <button onClick={handleBrew} disabled={isBrewing || !basePrompt} className="px-4 py-2 bg-primary rounded disabled:bg-opacity-50">
+                    {isBrewing ? 'Brewing...' : 'Brew Prompt'}
+                </button>
+                <div>
+                    <label className="text-sm font-bold">Brewed Result</label>
+                    <textarea value={brewedPrompt} readOnly className="w-full h-32 p-2 mt-1 bg-background border rounded"/>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AlchemistWorkbench;
+Step 4: The Magic - Gemini Blending Service
+Finally, let's create the blendPrompt function.
+
+4.1. Update services/geminiService.ts
+
+TypeScript
+
+// In services/geminiService.ts
+
+// ... (existing functions)
+
+export async function blendPrompt(basePrompt: string, essences: string[]) {
+  const blendingInstruction = `
+    You are a prompt alchemist. Your task is to magically blend a "base prompt" with several "essences" to create a new, refined, and superior prompt.
+
+    **Base Prompt:**
+    "${basePrompt}"
+
+    **Essences to blend in:**
+    ${essences.map(e => `- "${e}"`).join('\n')}
+
+    Combine these elements into a single, cohesive, and powerful new prompt. Return ONLY the new prompt.
+    `;
+
+  // Using the existing generateContent function for simplicity
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: blendingInstruction,
+  });
+  return response;
+}
+3. The Future Roadmap: New Ideas & Enhancements
+With the core "Alchemist" feature in place, here are some ideas for future sprints to establish a strong product moat.
+
+Gamification & Community
+Prompt Mastery Score: Award points to users for creating prompts, receiving positive feedback (rating in HistoryItem), and having their prompts saved by others.
+
+Leaderboards: Display top "Prompt Alchemists" on the dashboard.
+
+Community Library: Allow users to submit their best "brewed" prompts to a community-visible section of the Alchemist's Library, complete with upvotes and comments.
+
+Advanced Alchemist Features
+Essence Extraction 2.0: Instead of just using the whole prompt as an "essence," use a Gemini function call to analyze a prompt and extract key modifiers (e.g., tone, format, persona).
+
+"Surprise Me" Button: A feature that randomly selects a base prompt and 2-3 essences from the library and brews them together for creative inspiration.
+
+A/B Testing Workbench: An advanced version of the workbench where a user can brew two different combinations of essences with the same base prompt and see the generated outputs side-by-side.
+
+Deeper IDE Integration
+Version Control for Prompts: Allow users to see a history of their saved prompts, diff between versions, and revert changes.
+
+Prompt Folders/Tagging: As users save more prompts, they will need better ways to organize them than a single flat list.
+
+Export/Import: Allow users to export their saved prompts and history as a JSON file, and import them into other instances of the application.
+

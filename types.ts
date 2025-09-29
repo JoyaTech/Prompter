@@ -44,3 +44,21 @@ export interface Theme {
   accent: string;
   border: string;
 }
+
+export interface CommunityPrompt {
+    id: string;
+    name: string;
+    description: string;
+    prompt: string;
+    downloads: number;
+    author: string;
+    tags: string[];
+}
+
+export interface AlchemistRecipe {
+    id: string;
+    name: string;
+    description: string;
+    prompt: string;
+    variables: { name: string; type: 'string' | 'number'; defaultValue: string }[];
+}
