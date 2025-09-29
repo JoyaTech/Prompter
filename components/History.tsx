@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { HistoryItem } from '../types';
-import { TrashIcon } from './icons';
+import { TrashIcon, ShieldCheckIcon } from './icons';
 
 interface HistoryProps {
   history: HistoryItem[];
@@ -26,12 +27,26 @@ const History: React.FC<HistoryProps> = ({ history, onSelectHistory, onDeleteHis
             >
               <button
                 onClick={() => onSelectHistory(item.prompt, item.response)}
-                className="text-left flex-grow overflow-hidden"
+                className="text-left flex-grow overflow-hidden flex items-center gap-2"
               >
-                <p className="text-gray-300 truncate" title={item.prompt}>{item.prompt}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {item.timestamp.toLocaleTimeString()}
-                </p>
+                {item.alignment_notes && (
+                  // FIX: Moved the title prop from the ShieldCheckIcon component to its parent div to fix a type error.
+                  // The 'title' attribute is valid on a div and provides the intended tooltip.
+                  <div className="relative" title={t('alignment_notes_title')}>
+                    <ShieldCheckIcon 
+                      className="w-5 h-5 text-cyan-400 shrink-0"
+                    />
+                     <div className="absolute bottom-full mb-2 w-64 bg-gray-900 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-gray-700 shadow-lg z-10">
+                        {item.alignment_notes}
+                    </div>
+                  </div>
+                )}
+                <div className="flex-grow overflow-hidden">
+                    <p className="text-gray-300 truncate" title={item.prompt}>{item.prompt}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {item.timestamp.toLocaleTimeString()}
+                    </p>
+                </div>
               </button>
               <button
                 onClick={() => onDeleteHistory(item.id)}

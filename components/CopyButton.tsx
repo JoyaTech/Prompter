@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path to be relative.
 import { CopyIcon, CheckIcon } from './icons';
 
 interface CopyButtonProps {
   textToCopy: string;
 }
 
-// FIX: Replaced JSX.Element with React.ReactElement to resolve "Cannot find namespace 'JSX'" error.
 function CopyButton({ textToCopy }: CopyButtonProps): React.ReactElement {
   const [isCopied, setIsCopied] = useState(false);
 

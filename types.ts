@@ -1,7 +1,10 @@
-// types.ts
 export type Language = 'en' | 'he';
+
 export type Mode = 'quick' | 'deep';
-export type TargetModel = 'Gemini-Ultra' | 'Code-Interpreter' | 'Imagen' | 'Generic-LLM';
+
+export type TargetModel = 'Generic-LLM' | 'Gemini-Ultra' | 'Code-Interpreter' | 'Imagen';
+
+export type Page = 'editor' | 'dashboard';
 
 export interface Prompt {
   id: string;
@@ -14,5 +17,6 @@ export interface HistoryItem {
   prompt: string;
   response: string;
   timestamp: Date;
-  alignment_notes?: string; // For Ethical Audit MVP
+  alignment_notes?: string; // For Ethical & Compliance Audit MVP
+  topics?: string[]; // For Dashboard Analytics
 }

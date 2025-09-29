@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CopyButton from './CopyButton';
+// FIX: Corrected import path to be relative.
 import { SaveIcon, CheckIcon } from './icons';
 
 interface OutputDisplayProps {

@@ -1,63 +1,96 @@
-// i18n.ts
+import Polyglot from 'polyglot.js';
 import { Language } from './types';
 
-const translations = {
+const phrases = {
   en: {
-    app_title: 'FlowIt Prompt Refiner',
-    app_tagline: 'Craft the perfect prompt for any task, powered by Gemini.',
-    switch_lang: 'עברית',
     switch_title: 'Switch to Hebrew',
-    user_prompt_placeholder: 'Enter your prompt here...',
-    mode_quick: 'Quick Refine',
-    mode_quick_desc: 'Fast, general improvements.',
-    mode_deep: 'Deep Analysis',
-    mode_deep_desc: 'Comprehensive, structured rewrite.',
-    refine_prompt_btn: 'Refine Prompt',
+    switch_lang: 'עברית',
+    app_title: 'FlowIt',
+    app_tagline: 'Refine Your AI Prompts to Perfection',
+    user_prompt_placeholder: 'Enter your initial prompt here...',
     refining: 'Refining...',
-    output_placeholder: 'Your refined prompt will appear here.',
-    save_prompt: 'Save Prompt',
-    prompt_saved: 'Saved!',
-    est_tokens: 'Est. Tokens:',
+    refine_prompt_btn: 'Refine Prompt',
+    mode_quick: 'Quick',
+    mode_quick_desc: 'Fast and simple refinement.',
+    mode_deep: 'Deep',
+    mode_deep_desc: 'In-depth analysis for higher quality.',
+    target_model_label: 'Target Model:',
+    model_generic: 'Generic LLM',
+    model_gemini_ultra: 'Gemini',
+    model_code_interpreter: 'Code Interpreter',
+    model_imagen: 'Image Gen (Imagen)',
     saved_prompts: 'Saved Prompts',
     history: 'History',
-    error_generic: 'An error occurred. Please try again.',
-    error_empty_prompt: 'Please enter a prompt to refine.',
-    target_model_label: 'Optimize for:',
-    model_generic: 'Generic LLM',
-    model_gemini_ultra: 'Gemini-Ultra',
-    model_code_interpreter: 'Code-Interpreter',
-    model_imagen: 'Imagen',
+    output_placeholder: 'Your refined prompt will appear here.',
+    est_tokens: 'Est. Tokens:',
+    prompt_saved: 'Saved!',
+    save_prompt: 'Save Prompt',
+    enter_prompt_name: 'Enter a name for this prompt:',
+    alignment_notes_title: 'Ethical & Compliance Notes',
+    menu_editor: 'Prompt Editor',
+    menu_dashboard: 'Analytics Dashboard',
+    dashboard_title: 'Prompt Analytics Hub',
+    dashboard_topic_analysis: 'Topic Breakdown',
+    dashboard_ethical_score: 'Ethical/Compliance Score',
+    dashboard_no_data: 'Generate some prompts in the editor to see your analytics here.',
+    total_prompts: 'Total Prompts',
   },
   he: {
-    app_title: 'FlowIt - מזקק פרומפטים',
-    app_tagline: 'צרו את הפרומפט המושלם לכל משימה, בעזרת Gemini.',
+    switch_title: 'עבור לאנגלית',
     switch_lang: 'English',
-    switch_title: 'החלף לאנגלית',
-    user_prompt_placeholder: 'הכנס את הפרומפט שלך כאן...',
-    mode_quick: 'זיקוק מהיר',
-    mode_quick_desc: 'שיפורים מהירים וכלליים.',
-    mode_deep: 'ניתוח עומק',
-    mode_deep_desc: 'שכתוב מקיף ומובנה.',
-    refine_prompt_btn: 'זקק פרומפט',
-    refining: 'מזקק...',
-    output_placeholder: 'הפרומפט המזוקק שלך יופיע כאן.',
-    save_prompt: 'שמור פרומפט',
-    prompt_saved: 'נשמר!',
-    est_tokens: 'אסימונים (משוער):',
+    app_title: 'FlowIt',
+    app_tagline: 'שפר את הפרומפטים שלך לשלמות',
+    user_prompt_placeholder: 'הזן כאן את הפרומפטים הראשוני שלך...',
+    refining: 'משפר...',
+    refine_prompt_btn: 'שפר פרומפט',
+    mode_quick: 'מהיר',
+    mode_quick_desc: 'שיפור מהיר ופשוט.',
+    mode_deep: 'מעמיק',
+    mode_deep_desc: 'ניתוח מעמיק לאיכות גבוהה יותר.',
+    target_model_label: 'מודל יעד:',
+    model_generic: 'LLM גנרי',
+    model_gemini_ultra: 'Gemini',
+    model_code_interpreter: 'מפרש קוד',
+    model_imagen: 'מחולל תמונות (Imagen)',
     saved_prompts: 'פרומפטים שמורים',
     history: 'היסטוריה',
-    error_generic: 'אירעה שגיאה. אנא נסה שוב.',
-    error_empty_prompt: 'אנא הכנס פרומפט לזיקוק.',
-    target_model_label: 'בצע אופטימיזציה עבור:',
-    model_generic: 'LLM גנרי',
-    model_gemini_ultra: 'Gemini-Ultra',
-    model_code_interpreter: 'Code-Interpreter',
-    model_imagen: 'Imagen',
+    output_placeholder: 'הפרומפט המשופר שלך יופיע כאן.',
+    est_tokens: 'טוקנים מוערכים:',
+    prompt_saved: 'נשמר!',
+    save_prompt: 'שמור פרומפט',
+    enter_prompt_name: 'הזן שם עבור פרומפט זה:',
+    alignment_notes_title: 'הערות אתיקה ותאימות',
+    menu_editor: 'עורך הפרומפטים',
+    menu_dashboard: 'לוח מחוונים אנליטי',
+    dashboard_title: 'מרכז ניתוח הפרומפטים',
+    dashboard_topic_analysis: 'ניתוח נושאים',
+    dashboard_ethical_score: 'ציון אתי/ציות',
+    dashboard_no_data: 'צור כמה פרומפטים בעורך כדי לראות את הניתוחים שלך כאן.',
+    total_prompts: 'סך הכל פרומפטים',
   },
 };
 
-export const useTranslation = (lang: Language) => {
-  return (key: keyof typeof translations.en): string => {
-    return translations[lang][key] || key;
-  };
+let polyglotInstance: Polyglot | undefined;
+
+const getPolyglotInstance = (): Polyglot => {
+  if (!polyglotInstance) {
+    polyglotInstance = new Polyglot({
+      phrases: phrases.en,
+      locale: 'en',
+    });
+  }
+  return polyglotInstance;
 };
+
+export const setLocale = (lang: Language) => {
+  const instance = getPolyglotInstance();
+  instance.locale(lang);
+  instance.replace(phrases[lang]);
+};
+
+export const t = (key: string, options?: any): string => {
+  return getPolyglotInstance().t(key, options);
+};
+
+// Ensure the instance is created on initial load
+getPolyglotInstance();

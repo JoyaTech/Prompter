@@ -1,5 +1,6 @@
 // components/PromptEditor.tsx
 import React from 'react';
+// FIX: Corrected import paths to be relative.
 import { Mode, Prompt, HistoryItem, TargetModel } from '../types';
 import { WandIcon } from './icons';
 import SavedPrompts from './SavedPrompts';

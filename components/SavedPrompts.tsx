@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import paths to be relative.
 import { Prompt } from '../types';
 import { TrashIcon } from './icons';
 

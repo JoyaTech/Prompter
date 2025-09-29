@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import paths to be relative.
 import { FlowItLogo } from './icons'; 
 import { Language } from '../types';
 
