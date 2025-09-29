@@ -1,39 +1,40 @@
 import React from 'react';
-import { Page } from '../types';
-import { FlowItLogo, DashboardIcon, EditIcon, SettingsIcon } from './icons';
+import { DashboardIcon, EditIcon, AlembicIcon, PaletteIcon } from './icons';
 
 interface SidebarProps {
-  currentPage: Page;
-  setCurrentPage: (page: Page) => void;
+  currentView: string;
+  onSetView: (view: string) => void;
   t: (key: string) => string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, t }) => {
-  // FIX: Specified a more precise type for the 'icon' prop to resolve a TypeScript error with React.cloneElement.
-  // This ensures that TypeScript knows the cloned element can accept a 'className'.
-  const NavItem: React.FC<{ page: Page; icon: React.ReactElement<{ className?: string }>; labelKey: string }> = ({ page, icon, labelKey }) => (
-    <button
-      onClick={() => setCurrentPage(page)}
-      className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${
-        currentPage === page ? 'bg-primary text-white shadow-lg' : 'text-text-secondary hover:bg-card-secondary hover:text-text-main'
-      }`}
-    >
-      {React.cloneElement(icon, { className: 'w-5 h-5' })}
-      <span className="font-medium">{t(labelKey)}</span>
-    </button>
-  );
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetView, t }) => {
+  const navItems = [
+    { id: 'dashboard', label: t('sidebar_dashboard'), icon: DashboardIcon },
+    { id: 'editor', label: t('sidebar_ide'), icon: EditIcon },
+    { id: 'alchemist', label: t('sidebar_alchemist'), icon: AlembicIcon },
+    { id: 'theme', label: t('sidebar_theme'), icon: PaletteIcon },
+  ];
 
   return (
-    <aside className="w-64 bg-card p-6 flex-col space-y-8 border-r border-border-color hidden md:flex">
-      <div className="flex items-center gap-3 mb-4">
-        <FlowItLogo className="w-8 h-8 text-primary" />
-        <h2 className="text-xl font-bold text-text-main">{t('app_title')}</h2>
+    <aside className="w-64 bg-card-secondary p-4 flex flex-col flex-shrink-0">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-text-main">GenSpark</h2>
       </div>
-
-      <nav className="space-y-2">
-        <NavItem page="editor" icon={<EditIcon />} labelKey="menu_editor" />
-        <NavItem page="dashboard" icon={<DashboardIcon />} labelKey="menu_dashboard" />
-        <NavItem page="theme" icon={<SettingsIcon />} labelKey="menu_theme" />
+      <nav className="flex flex-col gap-2">
+        {navItems.map(item => (
+          <button
+            key={item.id}
+            onClick={() => onSetView(item.id)}
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-left ${
+              currentView === item.id
+                ? 'bg-primary text-white'
+                : 'text-text-secondary hover:bg-border-color hover:text-text-main'
+            }`}
+          >
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </button>
+        ))}
       </nav>
     </aside>
   );

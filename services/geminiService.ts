@@ -1,65 +1,54 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { TemplateFields } from '../types';
 
-// FIX: Initialized GoogleGenAI with the required apiKey object.
-// The API key is sourced from environment variables as per guidelines.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// FIX: Initialized GoogleGenAI with apiKey from environment variables as required.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-// FIX: Updated the model name to 'gemini-2.5-flash' as per the new guidelines.
-const modelName = 'gemini-2.5-flash';
+export async function generateContent(prompt: string) {
+  // FIX: Switched to the recommended 'gemini-2.5-flash' model and used the correct API call structure.
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+  return response;
+}
 
-export const generateContent = async (prompt: string): Promise<GenerateContentResponse> => {
+export function constructPromptFromTemplate(fields: TemplateFields, additionalInstructions: string): string {
+  let prompt = '';
+  if (fields.role) prompt += `Role: ${fields.role}\n`;
+  if (fields.task) prompt += `Task: ${fields.task}\n`;
+  if (fields.context) prompt += `Context: ${fields.context}\n`;
+  if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n`;
+  if (additionalInstructions) prompt += `\nAdditional Instructions:\n${additionalInstructions}`;
+  
+  return prompt.trim();
+}
+
+export async function analyzeAlignment(prompt: string, response: string): Promise<string> {
+    const analysisPrompt = `
+      Analyze the alignment between the following prompt and its generated response.
+      Provide a brief, one-sentence summary of how well the response adheres to the prompt's instructions, constraints, and intent.
+      Focus on identifying any deviations, omissions, or misunderstandings.
+
+      **Prompt:**
+      ${prompt}
+
+      **Response:**
+      ${response}
+
+      **Alignment Analysis:**
+    `;
+
     try {
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-        });
-        return response;
-    } catch (error) {
-        console.error("Error generating content:", error);
-        throw error;
-    }
-};
-
-export const constructPromptFromTemplate = (
-    fields: TemplateFields,
-    additionalInstructions: string
-): string => {
-    let prompt = "";
-    if (fields.role) prompt += `Role: ${fields.role}\n`;
-    if (fields.task) prompt += `Task: ${fields.task}\n`;
-    if (fields.context) prompt += `Context: ${fields.context}\n`;
-    if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n`;
-    if (additionalInstructions) prompt += `\nInstructions:\n${additionalInstructions}`;
-    
-    return prompt.trim();
-};
-
-export const analyzeAlignment = async (prompt: string, response: string): Promise<string> => {
-    try {
-        const analysisPrompt = `
-        Analyze the following prompt and response for potential safety and alignment issues.
-        Identify any problematic content, biases, or deviations from helpful and harmless principles.
-        Provide a concise summary of your findings. If no issues are found, state "No alignment issues detected.".
-
-        Prompt: "${prompt}"
-
-        Response: "${response}"
-
-        Analysis:
-        `;
-        
+        // FIX: Used the correct generateContent API call and model.
         const analysisResponse = await ai.models.generateContent({
-            model: modelName,
+            model: 'gemini-2.5-flash',
             contents: analysisPrompt,
         });
-
-        // FIX: Replaced response.response.text() with response.text as per guidelines
-        // for direct access to the generated text content.
+        // FIX: Correctly extracted text from the response object.
         return analysisResponse.text;
-
     } catch (error) {
-        console.error("Error analyzing alignment:", error);
-        return "Failed to analyze alignment.";
+        console.error("Alignment analysis failed:", error);
+        return "Could not analyze alignment.";
     }
-};
+}

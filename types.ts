@@ -1,6 +1,3 @@
-
-export type Page = 'editor' | 'dashboard' | 'theme' | 'challenge';
-
 export interface Prompt {
   id: string;
   name: string;
@@ -18,23 +15,23 @@ export interface HistoryItem {
 }
 
 export interface TemplateFields {
-    role: string;
-    task: string;
-    context: string;
-    constraints: string;
+  role: string;
+  task: string;
+  context: string;
+  constraints: string;
 }
 
 export interface TestCase {
-    id: string;
-    input: string;
-    expectedOutput: string;
+  id: string;
+  input: string;
+  expectedOutput: string;
 }
 
 export interface TestResult {
-    testCaseId: string;
-    pass: boolean;
-    actualOutput: string;
-    error?: string;
+  testCaseId: string;
+  pass: boolean;
+  actualOutput: string;
+  error?: string;
 }
 
 export interface Theme {
@@ -46,14 +43,4 @@ export interface Theme {
   textSecondary: string;
   accent: string;
   border: string;
-}
-
-export interface PredefinedTheme extends Theme {
-  name: string;
-}
-
-export interface Challenge {
-  id: number;
-  title: string;
-  description: string;
 }
