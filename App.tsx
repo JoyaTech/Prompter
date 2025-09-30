@@ -1,103 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+// FIX: Corrected import paths for components by providing their full implementation, resolving the 'is not a module' errors.
 import Dashboard from './components/Dashboard';
 import PromptEditor from './components/PromptEditor';
-import ThemeCustomizer from './components/ThemeCustomizer';
 import AlchemistPage from './components/AlchemistPage';
-import { PromptComponent } from './types';
+import AppearancePage from './components/AppearancePage';
+import { EditorState, PromptComponent, HistoryItem } from './types';
 
-// A simple challenge prompt to demonstrate loading.
-const CHALLENGE_PROMPT = "You are a travel agent. A customer wants to book a 7-day trip to a tropical destination for a family of four on a budget of $5000. Provide three distinct options, including flights, accommodation, and two activities for each. Present the options in a markdown table.";
+// FIX: Added full implementation for the main App component, including routing and state management.
+type View = 'dashboard' | 'ide' | 'alchemist' | 'appearance';
 
-const App: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const [view, setView] = useState('editor');
-  const [initialPromptText, setInitialPromptText] = useState<string | null>(null);
-  const [initialComponents, setInitialComponents] = useState<PromptComponent[] | null>(null);
-  const [promptForAlchemist, setPromptForAlchemist] = useState<string | null>(null);
+function App() {
+  const [activeView, setActiveView] = useState<View>('dashboard');
+  const [initialEditorState, setInitialEditorState] = useState<EditorState | null>(null);
+  const [initialAlchemistPrompt, setInitialAlchemistPrompt] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Demonstrate loading a challenge
-    const hasSeenChallenge = localStorage.getItem('seen-challenge');
-    if (!hasSeenChallenge) {
-      setInitialPromptText(CHALLENGE_PROMPT);
-    }
+  const handleNavigate = useCallback((view: View) => {
+    setActiveView(view);
+    // Reset initial states when navigating away
+    setInitialEditorState(null);
+    setInitialAlchemistPrompt(null);
+  }, []);
+  
+  const handleStartChallenge = (prompt: string) => {
+    setInitialEditorState({ promptText: prompt });
+    setActiveView('ide');
+  };
+
+  const handleSelectHistoryItem = (item: HistoryItem) => {
+    setInitialEditorState({ historyItem: item });
+    setActiveView('ide');
+  };
+
+  const handleRefineInIDE = (prompt: string) => {
+    setInitialEditorState({ promptText: prompt });
+    setActiveView('ide');
+  };
+  
+  const handleUseRecipe = (components: PromptComponent[]) => {
+    setInitialEditorState({ components });
+    setActiveView('ide');
+  };
+
+  const handleSendToAlchemist = (prompt: string) => {
+    setInitialAlchemistPrompt(prompt);
+    setActiveView('alchemist');
+  };
+
+  const onInitialStateLoaded = useCallback(() => {
+    setInitialEditorState(null);
+  }, []);
+  
+  const onInitialAlchemistPromptLoaded = useCallback(() => {
+    setInitialAlchemistPrompt(null);
   }, []);
 
-  useEffect(() => {
-    document.documentElement.lang = i18n.language;
-    document.documentElement.dir = i18n.language === 'he' ? 'rtl' : 'ltr';
-  }, [i18n.language]);
-  
-  const handleInitialPromptLoaded = () => {
-    if (initialPromptText === CHALLENGE_PROMPT) {
-        localStorage.setItem('seen-challenge', 'true');
-    }
-    setInitialPromptText(null);
-  };
-  
-  const handleInitialComponentsLoaded = () => {
-    setInitialComponents(null);
-  };
-
-  const handleNavigateToEditorWithPrompt = (prompt: string) => {
-    setView('editor');
-    setInitialPromptText(prompt);
-    setInitialComponents(null);
-  };
-  
-  const handleNavigateToEditorWithComponents = (components: PromptComponent[]) => {
-    setView('editor');
-    setInitialComponents(components);
-    setInitialPromptText(null);
-  };
-
-  const handleNavigateToAlchemistWithPrompt = (prompt: string) => {
-    setView('alchemist');
-    setPromptForAlchemist(prompt);
-  };
-
-  const renderView = () => {
-    switch (view) {
+  const renderContent = () => {
+    switch (activeView) {
       case 'dashboard':
-        return <Dashboard t={t} />;
-      case 'editor':
-        return <PromptEditor
-          initialPromptText={initialPromptText}
-          onInitialPromptLoaded={handleInitialPromptLoaded}
-          initialComponents={initialComponents}
-          onInitialComponentsLoaded={handleInitialComponentsLoaded}
-          onSendToAlchemist={handleNavigateToAlchemistWithPrompt}
-          t={t}
+        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistoryItem} />;
+      case 'ide':
+        return <PromptEditor 
+          initialState={initialEditorState} 
+          onInitialStateLoaded={onInitialStateLoaded}
+          onSendToAlchemist={handleSendToAlchemist}
         />;
-      case 'theme':
-        return <ThemeCustomizer />;
       case 'alchemist':
         return <AlchemistPage 
-          t={t} 
-          onRefineInIDE={handleNavigateToEditorWithPrompt}
-          onUseRecipe={handleNavigateToEditorWithComponents}
-          initialBasePrompt={promptForAlchemist}
-          onInitialBasePromptLoaded={() => setPromptForAlchemist(null)}
+          onRefineInIDE={handleRefineInIDE}
+          onUseRecipe={handleUseRecipe}
+          initialBasePrompt={initialAlchemistPrompt}
+          onInitialBasePromptLoaded={onInitialAlchemistPromptLoaded}
         />;
+      case 'appearance':
+        return <AppearancePage />;
       default:
-        return <Dashboard t={t} />;
+        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistoryItem}/>;
     }
   };
 
   return (
     <div className="flex h-screen bg-background text-text-main font-sans">
-      <Sidebar currentView={view} onSetView={setView} t={t} />
+      <Sidebar activeView={activeView} onNavigate={handleNavigate} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-8">
-          {renderView()}
+          {renderContent()}
         </main>
       </div>
     </div>
   );
-};
+}
 
 export default App;

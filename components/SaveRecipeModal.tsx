@@ -1,112 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PromptComponent, PromptRecipe } from '../types';
+import { PromptComponent, RecipeVariable } from '../types';
+import { useAppContext } from './AppContext';
 
 interface SaveRecipeModalProps {
   isOpen: boolean;
   onClose: () => void;
   components: PromptComponent[];
-  onSave: (recipe: Omit<PromptRecipe, 'id'>) => void;
 }
 
-const SaveRecipeModal: React.FC<SaveRecipeModalProps> = ({ isOpen, onClose, components, onSave }) => {
+const extractVariables = (components: PromptComponent[]): RecipeVariable[] => {
+    const text = components.map(c => c.content).join(' ');
+    const regex = /\{\{([a-zA-Z0-9_]+)\}\}/g;
+    const matches = new Set<string>();
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        matches.add(match[1]);
+    }
+    return Array.from(matches).map(name => ({ name, defaultValue: '' }));
+};
+
+const SaveRecipeModal: React.FC<SaveRecipeModalProps> = ({ isOpen, onClose, components }) => {
   const { t } = useTranslation();
+  const { handleSaveRecipe } = useAppContext();
+  
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [variables, setVariables] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (isOpen) {
-      const allContent = components.map(c => c.content).join(' ');
-      const foundVariables = allContent.match(/{{(.*?)}}/g) || [];
-      const uniqueVariableNames = [...new Set(foundVariables.map(v => v.replace(/{{|}}/g, '')))];
-      
-      const initialVars: Record<string, string> = {};
-      uniqueVariableNames.forEach(v => {
-        initialVars[v] = '';
-      });
-      setVariables(initialVars);
-    }
-  }, [isOpen, components]);
-
-  const handleVariableChange = (varName: string, value: string) => {
-    setVariables(prev => ({ ...prev, [varName]: value }));
-  };
+  const variables = useMemo(() => extractVariables(components), [components]);
 
   const handleSave = () => {
-    if (!name.trim()) return;
-    const recipeVariables = Object.entries(variables).map(([name, defaultValue]) => ({
-      name,
-      defaultValue
-    }));
-    onSave({ name, description, components, variables: recipeVariables });
+    if (!name.trim() || !description.trim()) return;
+    const recipe = { name, description, components, variables };
+    handleSaveRecipe(recipe);
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="recipe-modal-title"
-    >
-      <div 
-        className="bg-card border border-border-color rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 m-4"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 id="recipe-modal-title" className="text-xl font-bold text-text-main">{t('recipe_modal_title')}</h2>
-        
-        <div>
-          <label htmlFor="recipe-name" className="block text-sm font-medium text-text-secondary mb-1">{t('recipe_modal_name')}</label>
-          <input
-            id="recipe-name"
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="w-full p-2 bg-background border border-border-color rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
-          />
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-card p-6 rounded-lg w-full max-w-lg shadow-lg border border-border-color">
+        <h2 className="text-lg font-bold mb-4">{t('save_recipe_modal_title')}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-text-secondary" htmlFor="recipe-name">{t('save_recipe_name_label')}</label>
+            <input id="recipe-name" type="text" value={name} onChange={e => setName(e.target.value)} className="w-full mt-1 p-2 bg-background border border-border-color rounded-md" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-text-secondary" htmlFor="recipe-desc">{t('save_recipe_desc_label')}</label>
+            <textarea id="recipe-desc" value={description} onChange={e => setDescription(e.target.value)} className="w-full mt-1 p-2 h-20 bg-background border border-border-color rounded-md resize-none" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-text-secondary">{t('save_recipe_vars_label')}</h3>
+            {variables.length > 0 ? (
+                <>
+                <p className="text-xs text-text-secondary/80 mb-2">{t('save_recipe_vars_desc')}</p>
+                <div className="flex flex-wrap gap-2">
+                    {variables.map(v => <span key={v.name} className="px-2 py-1 bg-primary/20 text-primary text-xs font-mono rounded">{`{{${v.name}}}`}</span>)}
+                </div>
+                </>
+            ) : (
+                <p className="text-xs text-text-secondary/80 mt-1">{t('save_recipe_no_vars')}</p>
+            )}
+          </div>
         </div>
-
-        <div>
-          <label htmlFor="recipe-desc" className="block text-sm font-medium text-text-secondary mb-1">{t('recipe_modal_desc')}</label>
-          <textarea
-            id="recipe-desc"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            rows={3}
-            className="w-full p-2 bg-background border border-border-color rounded-md resize-none focus:ring-2 focus:ring-primary focus:outline-none"
-          />
-        </div>
-        
-        <div>
-            <h3 className="text-md font-semibold text-text-main mb-2">{t('recipe_modal_vars')}</h3>
-            <div className="space-y-2 max-h-40 overflow-y-auto bg-background/50 p-3 rounded-md">
-                {Object.keys(variables).length > 0 ? Object.keys(variables).map(varName => (
-                    <div key={varName} className="flex items-center gap-2">
-                        <span className="font-mono text-sm text-accent p-2 bg-card-secondary rounded-md">{`{{${varName}}}`}</span>
-                        <input
-                            type="text"
-                            placeholder={t('recipe_modal_default_val')}
-                            value={variables[varName]}
-                            onChange={e => handleVariableChange(varName, e.target.value)}
-                            className="flex-grow p-2 bg-background border border-border-color rounded-md text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                        />
-                    </div>
-                )) : (
-                    <p className="text-sm text-text-secondary italic">{t('recipe_modal_no_vars')}</p>
-                )}
-            </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold text-text-main bg-card-secondary rounded-lg hover:bg-border-color">
-            Cancel
-          </button>
-          <button onClick={handleSave} disabled={!name.trim()} className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:opacity-90 disabled:bg-primary/50">
-            {t('recipe_modal_save')}
-          </button>
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 bg-card-secondary rounded-md text-sm font-semibold">Cancel</button>
+          <button onClick={handleSave} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-semibold">{t('save_recipe_save_button')}</button>
         </div>
       </div>
     </div>

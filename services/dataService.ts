@@ -1,8 +1,9 @@
-import { Prompt, HistoryItem, PromptRecipe } from '../types';
+import { Prompt, HistoryItem, PromptRecipe, Folder } from '../types';
 
-const PROMPTS_KEY = 'gen-spark-prompts';
-const HISTORY_KEY = 'gen-spark-history';
-const RECIPES_KEY = 'gen-spark-recipes';
+const PROMPTS_KEY = 'flow-it-magical-prompts';
+const HISTORY_KEY = 'flow-it-magical-history';
+const RECIPES_KEY = 'flow-it-magical-recipes';
+const FOLDERS_KEY = 'flow-it-magical-folders';
 
 export const getPrompts = (): Prompt[] => {
     try {
@@ -61,5 +62,23 @@ export const saveRecipes = (recipes: PromptRecipe[]): void => {
         localStorage.setItem(RECIPES_KEY, JSON.stringify(recipes));
     } catch (e) {
         console.error("Failed to save recipes to localStorage", e);
+    }
+};
+
+export const getFolders = (): Folder[] => {
+    try {
+        const data = localStorage.getItem(FOLDERS_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error("Failed to load folders from localStorage", e);
+        return [];
+    }
+};
+
+export const saveFolders = (folders: Folder[]): void => {
+    try {
+        localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+    } catch (e) {
+        console.error("Failed to save folders to localStorage", e);
     }
 };

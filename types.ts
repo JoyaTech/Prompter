@@ -1,7 +1,17 @@
+// FIX: Added definitions for all shared types used across the application.
+export type PromptComponentType = 'role' | 'task' | 'context' | 'constraints' | 'text';
+
+export interface PromptComponent {
+  id: string;
+  type: PromptComponentType;
+  content: string;
+}
+
 export interface Prompt {
   id: string;
   name: string;
   text: string;
+  folderId?: string;
 }
 
 export interface HistoryItem {
@@ -9,21 +19,29 @@ export interface HistoryItem {
   prompt: string;
   response: string;
   timestamp: Date;
-  alignment_notes?: string;
   rating?: number;
   feedback?: string;
+  alignment_notes?: string;
   comparisonId?: string;
+  duration?: number;
 }
 
-export interface TemplateFields {
-  role: string;
-  task: string;
-  context: string;
-  constraints: string;
+export interface RecipeVariable {
+    name: string;
+    defaultValue: string;
+}
+
+export interface PromptRecipe {
+  id: string;
+  name: string;
+  description: string;
+  components: PromptComponent[];
+  variables: RecipeVariable[];
+  folderId?: string;
 }
 
 export interface TestCase {
-  id:string;
+  id: string;
   input: string;
   expectedOutput: string;
 }
@@ -35,15 +53,10 @@ export interface TestResult {
   error?: string;
 }
 
-export interface Theme {
-  primary: string;
-  background: string;
-  card: string;
-  cardSecondary: string;
-  textMain: string;
-  textSecondary: string;
-  accent: string;
-  border: string;
+export interface EditorState {
+  promptText?: string;
+  components?: PromptComponent[];
+  historyItem?: HistoryItem;
 }
 
 export interface CommunityPrompt {
@@ -56,31 +69,37 @@ export interface CommunityPrompt {
     tags: string[];
 }
 
-export interface AlchemistRecipe {
-    id: string;
-    name: string;
-    description: string;
-    prompt: string;
-    variables: { name: string; type: 'string' | 'number'; defaultValue: string }[];
-}
-
-export type PromptComponentType = 'role' | 'task' | 'context' | 'constraints' | 'text';
-
-export interface PromptComponent {
-  id: string;
-  type: PromptComponentType;
-  content: string;
-}
-
-export interface PromptRecipe {
-    id: string;
-    name: string;
-    description: string;
-    components: PromptComponent[];
-    variables: { name: string; defaultValue: string }[];
-}
-
 export interface Essence {
     id: string;
     text: string;
 }
+
+export interface Folder {
+    id: string;
+    name: string;
+    type: 'prompt' | 'recipe';
+}
+
+export interface ThemeColors {
+  primary: string;
+  background: string;
+  card: string;
+  'card-secondary': string;
+  'text-main': string;
+  'text-secondary': string;
+  'border-color': string;
+  accent: string;
+}
+
+export interface ThemeSettings {
+  name: string;
+  colors: ThemeColors;
+  fonts: {
+    heading: string;
+    body: string;
+  };
+  density: 'compact' | 'comfortable' | 'spacious';
+  borderRadius: number; // in rem
+}
+
+export type ThemePreset = 'default' | 'ocean' | 'forest' | 'sunset';

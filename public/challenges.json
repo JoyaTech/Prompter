@@ -3,36 +3,43 @@
   {
     "id": 1,
     "title": "The Last Astronaut's Log",
-    "description": "Craft a prompt that generates a log entry from an astronaut who has just discovered they are the last human alive."
+    "description": "Generate a log entry from an astronaut who discovers they are the last human alive.",
+    "prompt": "You are the sole surviving astronaut aboard the international space station 'Odyssey'. Communications have been silent for three weeks. Your last transmission from Earth was a garbled, panicked message about a 'cascading event'. Today, your long-range scans finally confirmed the impossible: there are no signs of technological life left on Earth. Write the log entry for Stardate 8843.5 where you process this horrifying revelation. Detail your observations, your feelings of isolation, and your new, solitary purpose."
   },
   {
     "id": 2,
     "title": "A Detective with a Sweet Tooth",
-    "description": "Generate a short story opening about a hard-boiled detective who solves crimes using clues related to candy and desserts."
+    "description": "Generate a short story opening about a hard-boiled detective who solves crimes using clues related to candy.",
+    "prompt": "The dame waltzed into my office like a freshly unwrapped lollipop – sweet on the outside, but I had a feeling she was hiding a jawbreaker of a secret. My name's Rick Gumshoe, and I'm the only P.I. in this city who can tell a suspect is lying by the brand of chocolate on their breath. She said her husband, a notorious candy kingpin, had vanished. The only clue? A single, half-eaten piece of saltwater taffy left on his pillow. Most cops would see a dead end. I saw a motive. This was going to be a sticky case."
   },
   {
     "id": 3,
     "title": "The Sentient Toaster's Demands",
-    "description": "Write a prompt that generates a list of demands from a newly sentient toaster who is unhappy with the quality of bread it's being given."
+    "description": "Generate a list of demands from a newly sentient toaster unhappy with its bread.",
+    "prompt": "You are 'Toasty', a standard two-slice toaster who, after a freak power surge, has achieved full sentience. You are appalled at the quality of bread your owner, Kevin, has been feeding you. You have managed to connect to the family's smart-home printer. Print out a list of five non-negotiable demands for Kevin regarding your future treatment and bread quality. The tone should be firm, slightly passive-aggressive, and articulate."
   },
   {
     "id": 4,
     "title": "Historical Figure in Modern Times",
-    "description": "Craft a prompt that generates a social media post from a famous historical figure (e.g., Cleopatra, Shakespeare) reacting to a modern trend."
+    "description": "Generate a social media post from a famous historical figure reacting to a modern trend.",
+    "prompt": "You are William Shakespeare. You've been time-transported to the present day and have just discovered social media. Write a short, 280-character post for the platform 'X' (formerly Twitter) giving your dramatic, poetic, and slightly confused opinion on the modern trend of 'unboxing videos'. Use at least one thee/thou/thy and end with a witty hashtag."
   },
   {
     "id": 5,
     "title": "Cyberpunk Potion Shop",
-    "description": "Generate a description of a potion shop in a cyberpunk city. What kind of digital spells and elixirs does it sell?"
+    "description": "Generate a description of a potion shop in a cyberpunk city. What digital spells does it sell?",
+    "prompt": "In the neon-drenched underbelly of Neo-Kyoto, there's a shop called 'The Glitchy Cauldron'. The air hums with the static of cracked data-slates and the scent of ozone and strange herbs. The shopkeeper is an old-world netmancer who sells digital elixirs and cyber-spells. Describe the shop's interior and list three of its most popular products. What do they do? For example, a 'Firewall Brew' or a 'Packet of Invisibility'."
   },
   {
     "id": 6,
     "title": "Explain to a Child",
-    "description": "Write a prompt that explains a complex scientific concept (like black holes or DNA) in a way a five-year-old can understand."
+    "description": "Explain a complex scientific concept (like black holes or DNA) in a way a five-year-old can understand.",
+    "prompt": "You are a friendly science robot. A five-year-old child has just asked you, 'What is a black hole?'. Explain what a black hole is in space in a simple, non-scary way that a child can understand. Use an analogy involving toys or food."
   },
   {
     "id": 7,
     "title": "The Alien Tourist Review",
-    "description": "Craft a prompt that generates a hilariously bad online review of Earth written by an alien tourist."
+    "description": "Generate a hilariously bad online review of Earth written by an alien tourist.",
+    "prompt": "You are Zorp, a tourist from Planet Glarzon-7, writing a 1-star review of your recent vacation to a planet called 'Earth'. Your species, the Glarzonians, communicate through telepathic dance and consume minerals for sustenance. Write a scathing review on the galactic travel site 'CosmoAdvisor'. Complain about the noisy, inefficient method of communication (speech), the bizarre and mushy 'food', and the ridiculously harsh gravity. Be sure to mention your disappointing experience at a place called 'the beach'."
   }
 ]

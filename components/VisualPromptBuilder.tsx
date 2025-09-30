@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { PromptComponent, PromptComponentType } from '../types';
 import { UserIcon, TargetIcon, InfoIcon, LockIcon, TextBoxIcon, TrashIcon, MoveIcon } from './icons';
@@ -6,7 +7,6 @@ import { UserIcon, TargetIcon, InfoIcon, LockIcon, TextBoxIcon, TrashIcon, MoveI
 interface VisualPromptBuilderProps {
   components: PromptComponent[];
   onComponentsChange: (newComponents: PromptComponent[]) => void;
-  t: (key: string) => string;
 }
 
 const COMPONENT_MAP: Record<PromptComponentType, { labelKey: string; icon: React.FC<any> }> = {
@@ -17,7 +17,8 @@ const COMPONENT_MAP: Record<PromptComponentType, { labelKey: string; icon: React
   text: { labelKey: 'component_type_text', icon: TextBoxIcon },
 };
 
-const PaletteItem: React.FC<{ type: PromptComponentType; t: (key: string) => string }> = ({ type, t }) => {
+const PaletteItem: React.FC<{ type: PromptComponentType }> = ({ type }) => {
+  const { t } = useTranslation();
   const { labelKey, icon: Icon } = COMPONENT_MAP[type];
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -41,8 +42,8 @@ const CanvasItem: React.FC<{
   onUpdate: (id: string, content: string) => void;
   onDelete: (id: string) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
-  t: (key: string) => string;
-}> = ({ component, onUpdate, onDelete, onDragStart, t }) => {
+}> = ({ component, onUpdate, onDelete, onDragStart }) => {
+  const { t } = useTranslation();
   const { labelKey } = COMPONENT_MAP[component.type];
 
   return (
@@ -74,9 +75,11 @@ const CanvasItem: React.FC<{
   );
 };
 
-const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, onComponentsChange, t }) => {
+const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, onComponentsChange }) => {
+  const { t } = useTranslation();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const dragItemId = useRef<string | null>(null);
+  const dragOverItemId = useRef<string | null>(null);
 
   const handleContentChange = (id: string, content: string) => {
     onComponentsChange(components.map(c => (c.id === id ? { ...c, content } : c)));
@@ -87,12 +90,16 @@ const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, o
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    setDraggedItemId(id);
+    dragItemId.current = id;
     e.dataTransfer.setData('componentId', id);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    const targetElement = (e.target as HTMLElement).closest('[data-id]');
+    if (targetElement) {
+        dragOverItemId.current = targetElement.getAttribute('data-id');
+    }
     setIsDraggingOver(true);
   };
 
@@ -102,23 +109,25 @@ const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, o
     const componentType = e.dataTransfer.getData('componentType') as PromptComponentType;
     const componentId = e.dataTransfer.getData('componentId');
 
+    // Case 1: Dropping a new component from the palette
     if (componentType) {
       const newComponent: PromptComponent = { id: uuidv4(), type: componentType, content: '' };
       onComponentsChange([...components, newComponent]);
-    } else if (componentId && draggedItemId) {
-      const draggedIndex = components.findIndex(c => c.id === draggedItemId);
-      const targetElement = (e.target as HTMLElement).closest('[draggable="true"]');
-      const targetId = targetElement?.getAttribute('data-id');
-      const targetIndex = components.findIndex(c => c.id === targetId);
+    } 
+    // Case 2: Reordering existing components
+    else if (componentId && dragItemId.current) {
+      const draggedIndex = components.findIndex(c => c.id === dragItemId.current);
+      const targetIndex = components.findIndex(c => c.id === dragOverItemId.current);
 
-      if (draggedIndex > -1 && targetIndex > -1 && draggedIndex !== targetIndex) {
-          const newItems = [...components];
-          const [removed] = newItems.splice(draggedIndex, 1);
-          newItems.splice(targetIndex, 0, removed);
-          onComponentsChange(newItems);
+      if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
+        const newItems = [...components];
+        const [removed] = newItems.splice(draggedIndex, 1);
+        newItems.splice(targetIndex, 0, removed);
+        onComponentsChange(newItems);
       }
     }
-    setDraggedItemId(null);
+    dragItemId.current = null;
+    dragOverItemId.current = null;
   };
 
   return (
@@ -127,7 +136,7 @@ const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, o
         <h3 className="text-md font-semibold text-text-main mb-3">{t('visual_builder_palette_title')}</h3>
         <div className="space-y-3">
           {(Object.keys(COMPONENT_MAP) as PromptComponentType[]).map(type => (
-            <PaletteItem key={type} type={type} t={t} />
+            <PaletteItem key={type} type={type} />
           ))}
         </div>
       </div>
@@ -147,7 +156,7 @@ const VisualPromptBuilder: React.FC<VisualPromptBuilderProps> = ({ components, o
           <div className="space-y-4">
             {components.map(c => (
               <div key={c.id} data-id={c.id}>
-                <CanvasItem component={c} onUpdate={handleContentChange} onDelete={handleDeleteComponent} onDragStart={handleDragStart} t={t} />
+                <CanvasItem component={c} onUpdate={handleContentChange} onDelete={handleDeleteComponent} onDragStart={handleDragStart} />
               </div>
             ))}
           </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 import remarkGfm from 'remark-gfm';
+// FIX: Corrected import for CopyButton by providing its full implementation, resolving the 'is not a module' error.
 import CopyButton from './CopyButton';
 import { SparklesIcon, StarIcon } from './icons';
 import { HistoryItem } from '../types';
@@ -13,10 +15,10 @@ interface OutputDisplayProps {
   onUpdateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
   onDeclareWinner?: (promptText: string) => void;
   competingRating?: number;
-  t: (key: string) => string;
 }
 
-const FeedbackCollector: React.FC<{ historyId: string; onUpdateHistoryItem: OutputDisplayProps['onUpdateHistoryItem'], t: (key: string) => string }> = ({ historyId, onUpdateHistoryItem, t }) => {
+const FeedbackCollector: React.FC<{ historyId: string; onUpdateHistoryItem: OutputDisplayProps['onUpdateHistoryItem'] }> = ({ historyId, onUpdateHistoryItem }) => {
+    const { t } = useTranslation();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [feedback, setFeedback] = useState("");
@@ -58,7 +60,8 @@ const FeedbackCollector: React.FC<{ historyId: string; onUpdateHistoryItem: Outp
     );
 };
 
-const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt, historyItem, onUpdateHistoryItem, onDeclareWinner, competingRating, t }) => {
+const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt, historyItem, onUpdateHistoryItem, onDeclareWinner, competingRating }) => {
+  const { t } = useTranslation();
   const showHigherRatedBadge = 
     historyItem?.rating &&
     typeof competingRating === 'number' &&
@@ -106,7 +109,7 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt
        )}
        {output && !isLoading && historyItem && (
         <div className="mt-4 pt-4 border-t border-border-color">
-            <FeedbackCollector historyId={historyItem.id} onUpdateHistoryItem={onUpdateHistoryItem} t={t} />
+            <FeedbackCollector historyId={historyItem.id} onUpdateHistoryItem={onUpdateHistoryItem} />
         </div>
        )}
     </div>

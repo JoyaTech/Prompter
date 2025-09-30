@@ -1,15 +1,17 @@
 
+
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { HistoryItem } from '../types';
 import { TrashIcon, ShieldCheckIcon, StarIcon } from './icons';
 import { useAppContext } from './AppContext';
 
 interface HistoryProps {
   onSelectHistory: (item: HistoryItem) => void;
-  t: (key: string) => string;
 }
 
-const History: React.FC<HistoryProps> = ({ onSelectHistory, t }) => {
+const History: React.FC<HistoryProps> = ({ onSelectHistory }) => {
+  const { t } = useTranslation();
   const { history, handleDeleteHistory: onDeleteHistory } = useAppContext();
 
   if (history.length === 0) {

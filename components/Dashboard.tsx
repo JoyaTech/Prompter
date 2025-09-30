@@ -1,56 +1,61 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { HistoryItem } from '../types';
-import { useAppContext } from './AppContext';
+import ChallengeCard from './ChallengeCard';
+import History from './History';
+import SavedPrompts from './SavedPrompts';
 
 interface DashboardProps {
-  t: (key: string) => string;
+  onStartChallenge: (prompt: string) => void;
+  onSelectHistory: (item: HistoryItem) => void;
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
-    <div className="bg-card p-6 rounded-lg border border-border-color">
-        <h4 className="text-sm font-medium text-text-secondary">{title}</h4>
-        <p className="text-3xl font-bold text-text-main mt-2">{value}</p>
-    </div>
-);
+const challenges = [
+  {
+    title: 'Your First Prompt',
+    description: 'Learn the basics by crafting a simple "hello world" prompt.',
+    prompt: 'You are a friendly assistant. Greet the user and ask how you can help them today.',
+  },
+  {
+    title: 'Creative Storyteller',
+    description: 'Generate a short story opening based on three random words.',
+    prompt: 'Write the opening paragraph of a fantasy story that includes the words "dragon", "library", and "sandwich".',
+  },
+  {
+    title: 'Code Generation',
+    description: 'Create a Python function based on a simple instruction.',
+    prompt: 'Write a Python function that takes a list of numbers and returns the sum of all even numbers in the list.',
+  },
+];
 
-const Dashboard: React.FC<DashboardProps> = ({ t }) => {
-  const { history } = useAppContext();
-
-  const successRate = () => {
-    const ratedItems = history.filter(item => typeof item.rating === 'number' && item.rating > 0);
-    if (ratedItems.length === 0) return 'N/A';
-    const successfulItems = ratedItems.filter(item => item.rating! >= 4);
-    return `${Math.round((successfulItems.length / ratedItems.length) * 100)}%`;
-  };
+const Dashboard: React.FC<DashboardProps> = ({ onStartChallenge, onSelectHistory }) => {
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-8">
       <div>
-          <h2 className="text-2xl font-bold text-text-main">{t('dashboard_title')}</h2>
-          <p className="mt-1 text-text-secondary">{t('dashboard_desc')}</p>
+        <h2 className="text-2xl font-bold text-text-main">{t('dashboard_welcome')}</h2>
+        <p className="mt-1 text-text-secondary">{t('dashboard_description')}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title={t('dashboard_total_runs')} value={history.length} />
-          <StatCard title={t('dashboard_avg_response_time')} value="~1.2s" />
-          <StatCard title={t('dashboard_success_rate')} value={successRate()} />
-      </div>
-
-       <div>
-        <h3 className="text-lg font-semibold text-text-secondary mb-4">{t('dashboard_recent_activity')}</h3>
-        <div className="bg-card border border-border-color rounded-lg">
-          <ul className="divide-y divide-border-color">
-            {history.slice(0, 5).map(item => (
-              <li key={item.id} className="p-4">
-                <p className="text-sm text-text-main truncate font-medium">{item.prompt}</p>
-                <p className="text-xs text-text-secondary mt-1">{item.timestamp.toLocaleString()}</p>
-              </li>
-            ))}
-             {history.length === 0 && (
-                <li className="p-4 text-center text-sm text-text-secondary">No activity yet.</li>
-             )}
-          </ul>
+      <div>
+        <h3 className="text-lg font-semibold text-text-secondary mb-3">{t('dashboard_challenges')}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {challenges.map(challenge => (
+            <ChallengeCard
+              key={challenge.title}
+              title={challenge.title}
+              description={challenge.description}
+              prompt={challenge.prompt}
+              onStart={onStartChallenge}
+            />
+          ))}
         </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <History onSelectHistory={onSelectHistory} />
+        <SavedPrompts onSelectPrompt={onStartChallenge} />
       </div>
     </div>
   );

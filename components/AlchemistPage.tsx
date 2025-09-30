@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
+// FIX: Corrected import paths for components by providing their full implementation, resolving the 'is not a module' errors.
 import AlchemistLibrary from './AlchemistLibrary';
 import AlchemistWorkbench from './AlchemistWorkbench';
 import UseRecipeModal from './UseRecipeModal';
@@ -7,7 +9,6 @@ import { Essence, PromptRecipe, PromptComponent } from '../types';
 import { useAppContext } from './AppContext';
 
 interface AlchemistPageProps {
-  t: (key: string) => string;
   onRefineInIDE: (prompt: string) => void;
   onUseRecipe: (components: PromptComponent[]) => void;
   initialBasePrompt: string | null;
@@ -15,12 +16,12 @@ interface AlchemistPageProps {
 }
 
 const AlchemistPage: React.FC<AlchemistPageProps> = ({ 
-  t, 
   onRefineInIDE,
   onUseRecipe,
   initialBasePrompt,
   onInitialBasePromptLoaded
 }) => {
+  const { t } = useTranslation();
   const { handleSavePrompt: onSavePrompt } = useAppContext();
   const [basePrompt, setBasePrompt] = useState<string>('');
   const [essences, setEssences] = useState<Essence[]>([]);
@@ -64,6 +65,11 @@ const AlchemistPage: React.FC<AlchemistPageProps> = ({
     setIsUseRecipeModalOpen(false);
     setSelectedRecipe(null);
   };
+  
+  const handleSurpriseMe = (base: string, newEssences: string[]) => {
+      setBasePrompt(base);
+      setEssences(newEssences.map(e => ({ id: uuidv4(), text: e })));
+  };
 
   const handleUpdateEssences = (updatedEssences: Essence[]) => {
     setEssences(updatedEssences);
@@ -83,11 +89,14 @@ const AlchemistPage: React.FC<AlchemistPageProps> = ({
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ height: 'calc(100vh - 200px)' }}>
           <div className="lg:col-span-1 h-full">
-            <AlchemistLibrary onAddToWorkbench={handleAddToWorkbench} onSelectRecipe={handleSelectRecipe} />
+            <AlchemistLibrary 
+              onAddToWorkbench={handleAddToWorkbench} 
+              onSelectRecipe={handleSelectRecipe}
+              onSurpriseMe={handleSurpriseMe}
+            />
           </div>
           <div className="lg:col-span-2 h-full">
             <AlchemistWorkbench 
-              t={t} 
               basePrompt={basePrompt}
               essences={essences}
               onUpdateBasePrompt={setBasePrompt}

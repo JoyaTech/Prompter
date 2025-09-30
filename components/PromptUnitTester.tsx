@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TestCase, TestResult } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { generateContent } from '../services/geminiService';
@@ -6,10 +7,10 @@ import { TrashIcon, PlusIcon, PlayIcon } from './icons';
 
 interface PromptUnitTesterProps {
     prompt: string;
-    t: (key: string) => string;
 }
 
-const PromptUnitTester: React.FC<PromptUnitTesterProps> = ({ prompt, t }) => {
+const PromptUnitTester: React.FC<PromptUnitTesterProps> = ({ prompt }) => {
+    const { t } = useTranslation();
     const [testCases, setTestCases] = useState<TestCase[]>([
         { id: uuidv4(), input: 'a friendly, engaging tone', expectedOutput: 'Hello there' },
     ]);
@@ -38,7 +39,6 @@ const PromptUnitTester: React.FC<PromptUnitTesterProps> = ({ prompt, t }) => {
             const testPrompt = prompt.replace(/{{input}}/gi, testCase.input);
             try {
                 const response = await generateContent(testPrompt);
-                // FIX: Used response.text directly to get string output from Gemini API.
                 const actualOutput = response.text;
                 const pass = actualOutput.toLowerCase().includes(testCase.expectedOutput.toLowerCase());
                 newResults.push({ testCaseId: testCase.id, pass, actualOutput });
@@ -72,7 +72,6 @@ const PromptUnitTester: React.FC<PromptUnitTesterProps> = ({ prompt, t }) => {
                     <div key={tc.id} className="flex items-center gap-3 p-3 bg-background rounded-md">
                         <span className="text-text-secondary font-mono text-sm">#{index + 1}</span>
                         <div className="flex-grow">
-                            {/* FIX: Corrected a syntax error in the JSX expression. The original text was not a valid JavaScript expression. It has been converted to a template literal to correctly render the instructional text. */}
                             <label className="text-xs text-text-secondary">{`${t('tester_input_label')} (use \`{{input}}\` in prompt)`}</label>
                             <input
                                 type="text"

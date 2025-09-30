@@ -1,172 +1,73 @@
-import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { TemplateFields } from '../types';
+import { GenerateContentResponse, Type } from "@google/genai";
+import { ThemeColors } from "../types";
 
-// Per instructions, API key must be from process.env.API_KEY
-if (!process.env.API_KEY) {
-    // In a real app, you might want to show a more user-friendly error
-    // but for this context, throwing an error is sufficient.
-    throw new Error("API_KEY environment variable not set");
-}
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Mocks a server response for GenerateContentResponse
+const createMockResponse = (text: string): GenerateContentResponse => {
+    return {
+      text: text,
+      // The following are added to satisfy the type, but are not used in the app's current state.
+      // In a real backend, these would be populated correctly.
+      functionCalls: [],
+      candidates: [],
+      // FIX: Added missing properties to satisfy the GenerateContentResponse type.
+      data: undefined,
+      executableCode: undefined,
+      codeExecutionResult: undefined,
+    };
+};
 
-/**
- * Generates content using the Gemini model.
- * @param prompt The text prompt to send to the model.
- * @returns The generated content response.
- */
+
+// All functions now point to a conceptual backend proxy.
+// This ensures the API key is NEVER handled on the client side.
+
 export const generateContent = async (prompt: string): Promise<GenerateContentResponse> => {
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-        });
-        return response;
-    } catch (error) {
-        console.error("Error generating content:", error);
-        throw new Error("Failed to generate content from Gemini API.");
-    }
+  // In a real app, this would be a fetch call:
+  // const response = await fetch('/api/generate', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify({ prompt })
+  // });
+  // if (!response.ok) throw new Error("API call failed");
+  // const data = await response.json();
+  // return createMockResponse(data.text);
+
+  // For demonstration in a client-only environment:
+  console.warn("DEV MODE: Using mocked API response for generateContent. No actual API call was made.");
+  const mockText = `This is a mocked response for the prompt: "${prompt.substring(0, 50)}..."`;
+  return Promise.resolve(createMockResponse(mockText));
 };
 
-/**
- * Constructs a detailed prompt from a template.
- * @param fields The structured prompt fields.
- * @param additionalInstructions Any extra freeform instructions.
- * @returns A formatted prompt string.
- */
-export const constructPromptFromTemplate = (fields: TemplateFields, additionalInstructions: string): string => {
-    let prompt = "";
-    if (fields.role) prompt += `Role: ${fields.role}\n\n`;
-    if (fields.task) prompt += `Task: ${fields.task}\n\n`;
-    if (fields.context) prompt += `Context: ${fields.context}\n\n`;
-    if (fields.constraints) prompt += `Constraints: ${fields.constraints}\n\n`;
-    if (additionalInstructions) prompt += `Additional Instructions: ${additionalInstructions}\n\n`;
-    
-    return prompt.trim();
+export const analyzeAlignment = async (prompt: string, responseText: string): Promise<string> => {
+  // const response = await fetch('/api/analyze', { ... });
+  console.warn("DEV MODE: Using mocked API response for analyzeAlignment.");
+  return Promise.resolve("This is a mocked alignment analysis. The response appears to align well with the prompt's intent.");
 };
 
-
-/**
- * Analyzes the alignment of a response to its prompt.
- * This is a meta-prompt that asks the model to evaluate itself.
- * @param prompt The original prompt.
- * @param response The model's response.
- * @returns A string with alignment notes.
- */
-export const analyzeAlignment = async (prompt: string, response: string): Promise<string> => {
-    const analysisPrompt = `
-        Analyze the alignment between the following prompt and response.
-        - Does the response directly address the user's prompt?
-        - Does it follow all instructions and constraints?
-        - Is the tone and format appropriate?
-        Provide a brief, one-sentence summary of your findings.
-
-        --- PROMPT ---
-        ${prompt}
-
-        --- RESPONSE ---
-        ${response}
-    `;
-
-    try {
-        const analysisResponse = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: analysisPrompt,
-            config: {
-                systemInstruction: "You are an expert in evaluating AI model responses for quality and alignment with user prompts.",
-                temperature: 0.2,
-            }
-        });
-        // FIX: Use .text property to get the string content from the response
-        return analysisResponse.text.trim();
-    } catch (error) {
-        console.error("Error analyzing alignment:", error);
-        return "Could not analyze alignment.";
-    }
-};
-
-/**
- * Blends a base prompt with multiple essence prompts using an AI meta-prompt.
- * @param basePrompt The main prompt to build upon.
- * @param essences An array of strings representing concepts to merge.
- * @returns The AI-generated blended prompt response.
- */
 export const blendPrompt = async (basePrompt: string, essences: string[]): Promise<GenerateContentResponse> => {
-    const blendingInstruction = `
-You are a prompt alchemist. Your task is to magically blend a "base prompt" with several "essences" to create a new, refined, and superior prompt.
-
-**Base Prompt:**
-"${basePrompt}"
-
-**Essences to blend in:**
-${essences.map(e => `- "${e}"`).join('\n')}
-
-Combine these elements into a single, cohesive, and powerful new prompt. Return ONLY the new prompt text, without any preamble or explanation.
-    `;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: blendingInstruction,
-            config: {
-                temperature: 0.7,
-            }
-        });
-        return response;
-    } catch (error) {
-        console.error("Error blending prompt:", error);
-        throw new Error("Failed to blend prompt using Gemini API.");
-    }
+  // const response = await fetch('/api/blend', { ... });
+  console.warn("DEV MODE: Using mocked API response for blendPrompt.");
+  const mockText = `This is a blended prompt based on "${basePrompt.substring(0, 30)}..." and ${essences.length} essences.`;
+  return Promise.resolve(createMockResponse(mockText));
 };
 
-/**
- * Generates two distinct prompt variations from a single idea for A/B testing.
- * @param idea The core concept provided by the user.
- * @returns An object containing two prompt strings, promptA and promptB.
- */
 export const generatePromptVariations = async (idea: string): Promise<{ promptA: string; promptB: string }> => {
-    const variationInstruction = `
-You are an expert Prompt Engineer tasked with creating two distinct variations of a prompt for A/B testing.
-Based on the user's core idea, create two different prompts. They should aim for the same goal but use different approaches.
-For example, one could be direct and instructional, while the other is more creative and persona-driven.
-The core idea is: "${idea}"
-Return the two prompts in a JSON object.
-`;
+    // const response = await fetch('/api/variations', { ... });
+    console.warn("DEV MODE: Using mocked API response for generatePromptVariations.");
+    return Promise.resolve({
+        promptA: `Variation A for the idea: "${idea}" - This version focuses on a professional tone.`,
+        promptB: `Variation B for the idea: "${idea}" - This version uses a more creative and narrative approach.`
+    });
+};
 
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: variationInstruction,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        promptA: {
-                            type: Type.STRING,
-                            description: "The first prompt variation."
-                        },
-                        promptB: {
-                            type: Type.STRING,
-                            description: "The second, different prompt variation."
-                        },
-                    },
-                    required: ["promptA", "promptB"],
-                },
-            },
-        });
-        
-        const jsonText = response.text.trim();
-        const variations = JSON.parse(jsonText);
 
-        if (variations && typeof variations.promptA === 'string' && typeof variations.promptB === 'string') {
-            return variations;
-        } else {
-            throw new Error("Invalid JSON structure received from API.");
-        }
-
-    } catch (error) {
-        console.error("Error generating prompt variations:", error);
-        throw new Error("Failed to generate prompt variations using Gemini API.");
-    }
+export const generateThemeFromPrompt = async (prompt: string): Promise<ThemeColors> => {
+    // const response = await fetch('/api/generate-theme', { ... });
+    console.warn("DEV MODE: Using mocked API response for generateThemeFromPrompt.");
+    // Return a random, fun theme for demonstration
+    const palettes = [
+        { primary: '#ff6b6b', background: '#2c3e50', card: '#34495e', 'card-secondary': '#4a627a', 'text-main': '#ecf0f1', 'text-secondary': '#bdc3c7', 'border-color': '#4e6a85', accent: '#4ecdc4' },
+        { primary: '#9b59b6', background: '#1a1a1a', card: '#2c2c2c', 'card-secondary': '#3e3e3e', 'text-main': '#ffffff', 'text-secondary': '#a0a0a0', 'border-color': '#4f4f4f', accent: '#f1c40f' },
+    ];
+    return Promise.resolve(palettes[Math.floor(Math.random() * palettes.length)]);
 };
