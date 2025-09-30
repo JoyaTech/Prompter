@@ -1,87 +1,116 @@
+// FIX: Implemented the ThemeCustomizer component.
 import React from 'react';
+import { useTheme } from './ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../components/ThemeContext';
-import { ThemeColors, ThemeSettings } from '../types';
-
-const ColorInput: React.FC<{ label: string, colorKey: keyof ThemeColors }> = ({ label, colorKey }) => {
-    const { theme, updateThemeColors } = useTheme();
-    return (
-        <div className="flex items-center justify-between">
-            <label htmlFor={colorKey} className="text-sm text-text-secondary">{label}</label>
-            <input
-                id={colorKey}
-                type="color"
-                value={theme.colors[colorKey]}
-                onChange={(e) => updateThemeColors({ [colorKey]: e.target.value })}
-                className="w-8 h-8 p-0 border-none rounded-md bg-transparent"
-            />
-        </div>
-    );
-};
+import { ThemeDensity, ThemeFonts, ThemePreset } from '../types';
 
 const ThemeCustomizer: React.FC = () => {
-    const { t } = useTranslation();
-    const { theme, availablePresets, setThemePreset, updateThemeSetting } = useTheme();
+  const { t } = useTranslation();
+  const { theme, setThemePreset, updateThemeColors, updateThemeSetting, availablePresets } = useTheme();
+  
+  const fontOptions: (keyof ThemeFonts)[] = ['heading', 'body'];
+  const densityOptions: ThemeDensity[] = ['compact', 'comfortable', 'spacious'];
 
-    return (
-        <div className="bg-card p-6 rounded-lg border border-border-color space-y-6">
-            <div>
-                <h3 className="text-lg font-semibold text-text-main mb-3">{t('appearance_presets')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.entries(availablePresets).map(([key, preset]) => (
-                        <button key={key} onClick={() => setThemePreset(key as any)} className={`p-2 rounded-md border-2 ${theme.name === preset.name ? 'border-primary' : 'border-transparent'}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.primary }}></div>
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.accent }}></div>
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.background }}></div>
-                            </div>
-                            <span className="text-sm font-medium">{preset.name}</span>
+  return (
+    <div className="bg-card p-6 rounded-lg border border-border-color max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Presets */}
+        <div>
+          <h3 className="text-lg font-semibold text-text-main mb-3">Presets</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {Object.entries(availablePresets).map(([key, preset]) => (
+              <button
+                key={key}
+                onClick={() => setThemePreset(key as ThemePreset)}
+                className={`p-3 rounded-md border-2 transition-colors ${
+                  theme.name === preset.name ? 'border-primary' : 'border-border-color hover:border-primary/50'
+                }`}
+              >
+                <div className="font-semibold text-text-main mb-2">{preset.name}</div>
+                <div className="flex gap-1">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.primary }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.accent }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors['card-secondary'] }}></div>
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.colors.background }}></div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Colors */}
+        <div>
+          <h3 className="text-lg font-semibold text-text-main mb-3">Colors</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {Object.entries(theme.colors).map(([name, value]) => (
+              <div key={name} className="flex items-center justify-between">
+                <label htmlFor={`color-${name}`} className="text-sm text-text-secondary capitalize">
+                  {name.replace('-', ' ')}
+                </label>
+                <input
+                  id={`color-${name}`}
+                  type="color"
+                  value={value}
+                  onChange={(e) => updateThemeColors({ [name]: e.target.value })}
+                  className="w-10 h-8 p-0 border-none rounded bg-card-secondary cursor-pointer"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Fonts */}
+        <div>
+          <h3 className="text-lg font-semibold text-text-main mb-3">Typography</h3>
+          <div className="space-y-3">
+            {fontOptions.map(fontType => (
+              <div key={fontType}>
+                <label className="block text-sm font-medium text-text-secondary mb-1 capitalize">{fontType} Font</label>
+                <input
+                  type="text"
+                  value={theme.fonts[fontType]}
+                  onChange={(e) => updateThemeSetting('fonts', { ...theme.fonts, [fontType]: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-background border border-border-color rounded-md text-sm"
+                  placeholder="e.g., Inter"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Density & Radius */}
+        <div>
+          <h3 className="text-lg font-semibold text-text-main mb-3">Layout</h3>
+          <div className="space-y-4">
+             <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Density</label>
+                <div className="flex gap-2">
+                    {densityOptions.map(d => (
+                        <button key={d} onClick={() => updateThemeSetting('density', d)} className={`px-3 py-1 text-sm rounded-md capitalize ${theme.density === d ? 'bg-primary text-white' : 'bg-card-secondary hover:bg-border-color'}`}>
+                            {d}
                         </button>
                     ))}
                 </div>
-            </div>
-
-            <div>
-                 <h3 className="text-lg font-semibold text-text-main mb-3">Colors</h3>
-                 <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                    <ColorInput label="Primary" colorKey="primary" />
-                    <ColorInput label="Accent" colorKey="accent" />
-                    <ColorInput label="Background" colorKey="background" />
-                    <ColorInput label="Card" colorKey="card" />
-                    <ColorInput label="Main Text" colorKey="text-main" />
-                    <ColorInput label="Secondary Text" colorKey="text-secondary" />
-                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 className="text-lg font-semibold text-text-main mb-3">{t('appearance_density')}</h3>
-                    <div className="flex items-center gap-2 bg-card-secondary p-1 rounded-md">
-                        {(['compact', 'comfortable', 'spacious'] as const).map(d => (
-                             <button key={d} onClick={() => updateThemeSetting('density', d)} className={`w-full py-1.5 text-sm font-semibold rounded ${theme.density === d ? 'bg-primary text-white' : 'hover:bg-border-color'}`}>
-                                {t(`appearance_density_${d}`)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div>
-                    <h3 className="text-lg font-semibold text-text-main mb-3">{t('appearance_border_radius')}</h3>
-                    <div className="flex items-center gap-3">
-                        <input
-                            type="range"
-                            min="0"
-                            max="1.5"
-                            step="0.125"
-                            value={theme.borderRadius}
-                            onChange={(e) => updateThemeSetting('borderRadius', parseFloat(e.target.value))}
-                            className="w-full h-2 bg-card-secondary rounded-lg appearance-none cursor-pointer"
-                        />
-                        <span className="text-sm font-mono text-text-secondary">{theme.borderRadius}rem</span>
-                    </div>
-                </div>
-            </div>
+             </div>
+             <div>
+                <label htmlFor="border-radius" className="block text-sm font-medium text-text-secondary mb-1">Border Radius: {theme.borderRadius}rem</label>
+                <input
+                  id="border-radius"
+                  type="range"
+                  min="0"
+                  max="1.5"
+                  step="0.125"
+                  value={theme.borderRadius}
+                  onChange={(e) => updateThemeSetting('borderRadius', parseFloat(e.target.value))}
+                  className="w-full"
+                />
+             </div>
+          </div>
         </div>
-    );
+
+      </div>
+    </div>
+  );
 };
 
 export default ThemeCustomizer;

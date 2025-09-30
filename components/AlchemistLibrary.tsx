@@ -1,84 +1,136 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CommunityPrompt, PromptRecipe } from '../types';
-import { getGenSparkPrompts, fetchAwesomePrompts, getHebrewPrompts } from '../services/communityPromptService';
 import { useAppContext } from './AppContext';
 import FolderStructure from './FolderStructure';
-import { DownloadIcon, UserIcon } from './icons';
+import { CommunityPrompt, PromptRecipe } from '../types';
+import { getCommunityPrompts } from '../services/communityPromptService';
+import { generatePromptVariations } from '../services/geminiService';
 
 interface AlchemistLibraryProps {
-    onAddToWorkbench: (promptText: string) => void;
-    onSelectRecipe: (recipe: PromptRecipe) => void;
-    onSurpriseMe: (base: string, essences: string[]) => void;
+  onAddToWorkbench: (text: string) => void;
+  onSelectRecipe: (recipe: PromptRecipe) => void;
+  onSurpriseMe: (base: string, essences: string[]) => void;
 }
 
-const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ onAddToWorkbench, onSelectRecipe, onSurpriseMe }) => {
-    const { t, i18n } = useTranslation();
-    const { recipes } = useAppContext();
-    const [activeTab, setActiveTab] = useState('community');
-    const [prompts, setPrompts] = useState<CommunityPrompt[]>([]);
+type Tab = 'my_prompts' | 'my_recipes' | 'community' | 'surprise';
+
+const SurpriseMe: React.FC<{ onSurpriseMe: AlchemistLibraryProps['onSurpriseMe'] }> = ({ onSurpriseMe }) => {
+    const { t } = useTranslation();
+    const [idea, setIdea] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        const loadPrompts = async () => {
-            setIsLoading(true);
-            const isHebrew = i18n.language === 'he';
-            const communitySources = isHebrew 
-                ? [getHebrewPrompts()] 
-                : [getGenSparkPrompts(), fetchAwesomePrompts()];
-            
-            const results = await Promise.all(communitySources);
-            setPrompts(results.flat());
+    const handleGenerate = async () => {
+        if (!idea) return;
+        setIsLoading(true);
+        try {
+            const { promptA, promptB } = await generatePromptVariations(idea);
+            onSurpriseMe(promptA, [promptB]);
+        } catch (error) {
+            console.error("Failed to generate variations:", error);
+        } finally {
             setIsLoading(false);
-        };
-        loadPrompts();
-    }, [i18n.language]);
-    
-    const handleSurprise = () => {
-        const base = "You are a creative assistant.";
-        const essences = ["Write in the style of a pirate.", "The tone should be humorous.", "The output must be a limerick."];
-        onSurpriseMe(base, essences);
+        }
     };
 
     return (
-        <div className="bg-card p-4 rounded-lg border border-border-color h-full flex flex-col">
-            <h3 className="text-lg font-semibold text-text-main mb-3">{t('alchemist_library_title')}</h3>
-            <div className="flex items-center gap-2 bg-card-secondary p-1 rounded-md mb-3">
-                <button onClick={() => setActiveTab('community')} className={`w-full py-1.5 text-sm font-semibold rounded ${activeTab === 'community' ? 'bg-primary text-white' : 'hover:bg-border-color'}`}>{t('alchemist_library_community')}</button>
-                <button onClick={() => setActiveTab('recipes')} className={`w-full py-1.5 text-sm font-semibold rounded ${activeTab === 'recipes' ? 'bg-primary text-white' : 'hover:bg-border-color'}`}>{t('alchemist_library_recipes')}</button>
-            </div>
-            <div className="flex-grow overflow-y-auto pr-2">
-                {activeTab === 'community' && (
-                    <div className="space-y-2">
-                        {isLoading ? <p>Loading...</p> : prompts.map(p => (
-                            <div key={p.id} className="bg-card-secondary p-3 rounded-md">
-                                <p className="font-semibold text-text-main">{p.name}</p>
-                                <p className="text-xs text-text-secondary mt-1">{p.description}</p>
-                                <div className="flex justify-between items-center mt-2">
-                                    <div className="flex items-center gap-3 text-xs text-text-secondary">
-                                        <div className="flex items-center gap-1"><UserIcon className="w-3 h-3"/><span>{p.author}</span></div>
-                                        <div className="flex items-center gap-1"><DownloadIcon className="w-3 h-3"/><span>{p.downloads || 0}</span></div>
-                                    </div>
-                                    <button onClick={() => onAddToWorkbench(p.prompt)} className="px-2 py-1 text-xs font-semibold bg-primary/80 text-white rounded-md hover:bg-primary">Add</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                 {activeTab === 'recipes' && (
-                    <FolderStructure 
-                        itemType="recipe"
-                        items={recipes}
-                        onSelectItem={onSelectRecipe}
-                        itemActionLabel="Use"
-                    />
-                 )}
-            </div>
-            <div className="mt-4 pt-4 border-t border-border-color">
-                <button onClick={handleSurprise} className="w-full py-2 bg-accent/80 text-background font-semibold rounded-md hover:bg-accent">{t('alchemist_library_surprise')}</button>
-            </div>
+        <div className="p-4 space-y-4">
+            <h4 className="text-lg font-bold">{t('surprise_me_title')}</h4>
+            <p className="text-sm text-text-secondary">{t('surprise_me_desc')}</p>
+            <input
+                type="text"
+                value={idea}
+                onChange={e => setIdea(e.target.value)}
+                placeholder="Enter a core idea, e.g., 'a friendly chatbot'"
+                className="w-full p-2 bg-background border border-border-color rounded-md"
+            />
+            <button onClick={handleGenerate} disabled={isLoading || !idea} className="w-full py-2 bg-accent text-background font-semibold rounded-md disabled:opacity-50">
+                {isLoading ? t('status_generating') : t('surprise_me_button')}
+            </button>
         </div>
     );
+}
+
+
+const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ onAddToWorkbench, onSelectRecipe, onSurpriseMe }) => {
+  const { t } = useTranslation();
+  const { prompts, recipes, folders, handleDeletePrompt } = useAppContext();
+  const [activeTab, setActiveTab] = useState<Tab>('my_prompts');
+  const [communityPrompts, setCommunityPrompts] = useState<CommunityPrompt[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'community') {
+      setIsLoading(true);
+      getCommunityPrompts(searchTerm).then(prompts => {
+        setCommunityPrompts(prompts);
+        setIsLoading(false);
+      });
+    }
+  }, [activeTab, searchTerm]);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'my_prompts':
+        return <FolderStructure itemType="prompt" items={prompts} onSelectItem={(p) => onAddToWorkbench(p.text)} onDeleteItem={handleDeletePrompt} itemActionLabel={t('library_add_to_workbench')} />;
+      case 'my_recipes':
+        return <FolderStructure itemType="recipe" items={recipes} onSelectItem={onSelectRecipe} itemActionLabel={t('library_use_recipe')} />;
+      case 'community':
+        return (
+          <div className="space-y-3">
+            {isLoading ? <p>{t('status_generating')}</p> : communityPrompts.map(p => (
+              <div key={p.id} className="bg-card-secondary p-3 rounded-md">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h5 className="font-semibold text-text-main">{p.name}</h5>
+                    <p className="text-xs text-text-secondary mt-1">{p.description}</p>
+                  </div>
+                  <button onClick={() => onAddToWorkbench(p.prompt)} className="ml-2 px-2 py-1 text-xs font-semibold bg-primary/80 text-white rounded-md hover:bg-primary">{t('library_add_to_workbench')}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      case 'surprise':
+          return <SurpriseMe onSurpriseMe={onSurpriseMe} />;
+    }
+  };
+
+  const TABS: { id: Tab, labelKey: string }[] = [
+    { id: 'my_prompts', labelKey: 'library_tab_my_prompts' },
+    { id: 'my_recipes', labelKey: 'library_tab_my_recipes' },
+    { id: 'community', labelKey: 'library_tab_community' },
+    { id: 'surprise', labelKey: 'library_tab_surprise' },
+  ];
+
+  return (
+    <div className="bg-card p-4 rounded-lg border border-border-color h-full flex flex-col">
+      <h3 className="text-lg font-semibold text-text-main mb-3">{t('alchemist_library_title')}</h3>
+      <div className="flex-shrink-0 mb-3">
+        <div className="flex border-b border-border-color">
+          {TABS.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-sm font-semibold -mb-px border-b-2 ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-main'}`}>
+              {t(tab.labelKey)}
+            </button>
+          ))}
+        </div>
+      </div>
+       {activeTab === 'community' && (
+           <div className="mb-3 flex-shrink-0">
+               <input
+                type="text"
+                placeholder={t('library_search_placeholder')}
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full p-2 bg-background border border-border-color rounded-md"
+               />
+           </div>
+       )}
+      <div className="flex-grow overflow-y-auto pr-2">
+        {renderContent()}
+      </div>
+    </div>
+  );
 };
 
 export default AlchemistLibrary;

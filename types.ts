@@ -1,18 +1,3 @@
-// FIX: Added definitions for all shared types used across the application.
-export type PromptComponentType = 'role' | 'task' | 'context' | 'constraints' | 'text';
-
-export interface PromptComponent {
-  id: string;
-  type: PromptComponentType;
-  content: string;
-}
-
-export interface Prompt {
-  id: string;
-  name: string;
-  text: string;
-  folderId?: string;
-}
 
 export interface HistoryItem {
   id: string;
@@ -22,22 +7,23 @@ export interface HistoryItem {
   rating?: number;
   feedback?: string;
   alignment_notes?: string;
-  comparisonId?: string;
-  duration?: number;
+  isVariant?: boolean;
+  variantParentId?: string;
 }
 
-export interface RecipeVariable {
-    name: string;
-    defaultValue: string;
-}
-
-export interface PromptRecipe {
+export interface Prompt {
   id: string;
   name: string;
-  description: string;
-  components: PromptComponent[];
-  variables: RecipeVariable[];
-  folderId?: string;
+  text: string;
+  folderId?: string | null;
+}
+
+export type PromptComponentType = 'role' | 'task' | 'context' | 'constraints' | 'text';
+
+export interface PromptComponent {
+    id: string;
+    type: PromptComponentType;
+    content: string;
 }
 
 export interface TestCase {
@@ -53,33 +39,6 @@ export interface TestResult {
   error?: string;
 }
 
-export interface EditorState {
-  promptText?: string;
-  components?: PromptComponent[];
-  historyItem?: HistoryItem;
-}
-
-export interface CommunityPrompt {
-    id: string;
-    name: string;
-    description: string;
-    prompt: string;
-    downloads: number;
-    author: string;
-    tags: string[];
-}
-
-export interface Essence {
-    id: string;
-    text: string;
-}
-
-export interface Folder {
-    id: string;
-    name: string;
-    type: 'prompt' | 'recipe';
-}
-
 export interface ThemeColors {
   primary: string;
   background: string;
@@ -91,15 +50,62 @@ export interface ThemeColors {
   accent: string;
 }
 
+export interface ThemeFonts {
+  heading: string;
+  body: string;
+}
+
+export type ThemeDensity = 'compact' | 'comfortable' | 'spacious';
+export type ThemePreset = 'default' | 'ocean' | 'forest' | 'sunset';
+
 export interface ThemeSettings {
   name: string;
   colors: ThemeColors;
-  fonts: {
-    heading: string;
-    body: string;
-  };
-  density: 'compact' | 'comfortable' | 'spacious';
-  borderRadius: number; // in rem
+  fonts: ThemeFonts;
+  density: ThemeDensity;
+  borderRadius: number;
 }
 
-export type ThemePreset = 'default' | 'ocean' | 'forest' | 'sunset';
+export interface CommunityPrompt {
+    id: string;
+    name: string;
+    prompt: string;
+    description: string;
+    author: string;
+    downloads: number;
+    tags: string[];
+}
+
+export interface Essence {
+    id: string;
+    text: string;
+}
+
+export interface RecipeVariable {
+    name: string;
+    defaultValue: string;
+}
+
+export interface PromptRecipe {
+    id: string;
+    name: string;
+    description: string;
+    components: PromptComponent[];
+    variables: RecipeVariable[];
+    folderId?: string | null;
+    name_HE?: string;
+}
+
+export interface Folder {
+    id: string;
+    name: string;
+    type: 'prompt' | 'recipe';
+}
+
+export type ToastMessage = {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+};
+
+export type View = 'dashboard' | 'ide' | 'alchemist' | 'appearance';

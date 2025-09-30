@@ -1,96 +1,101 @@
 import React, { useState, useCallback } from 'react';
-import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-// FIX: Corrected import paths for components by providing their full implementation, resolving the 'is not a module' errors.
+import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import PromptEditor from './components/PromptEditor';
+import IDEPage from './components/IDEPage';
 import AlchemistPage from './components/AlchemistPage';
 import AppearancePage from './components/AppearancePage';
-import { EditorState, PromptComponent, HistoryItem } from './types';
+import { HistoryItem, PromptComponent, View } from './types';
+import { useTranslation } from 'react-i18next';
+import ToastContainer from './components/ToastContainer';
 
-// FIX: Added full implementation for the main App component, including routing and state management.
-type View = 'dashboard' | 'ide' | 'alchemist' | 'appearance';
-
-function App() {
+const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('dashboard');
-  const [initialEditorState, setInitialEditorState] = useState<EditorState | null>(null);
-  const [initialAlchemistPrompt, setInitialAlchemistPrompt] = useState<string | null>(null);
+  const [promptToEdit, setPromptToEdit] = useState<string | null>(null);
+  const [componentsToEdit, setComponentsToEdit] = useState<PromptComponent[] | null>(null);
+  const [promptToBlend, setPromptToBlend] = useState<string | null>(null);
+  const { i18n } = useTranslation();
 
-  const handleNavigate = useCallback((view: View) => {
+  // Set document direction based on language
+  React.useEffect(() => {
+    document.documentElement.dir = i18n.language === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
+  const handleNavigate = (view: View) => {
     setActiveView(view);
-    // Reset initial states when navigating away
-    setInitialEditorState(null);
-    setInitialAlchemistPrompt(null);
-  }, []);
-  
+  };
+
   const handleStartChallenge = (prompt: string) => {
-    setInitialEditorState({ promptText: prompt });
+    setPromptToEdit(prompt);
     setActiveView('ide');
   };
 
-  const handleSelectHistoryItem = (item: HistoryItem) => {
-    setInitialEditorState({ historyItem: item });
+  const handleSelectHistory = (item: HistoryItem) => {
+    setPromptToEdit(item.prompt);
     setActiveView('ide');
   };
-
+  
   const handleRefineInIDE = (prompt: string) => {
-    setInitialEditorState({ promptText: prompt });
-    setActiveView('ide');
+      setPromptToEdit(prompt);
+      setComponentsToEdit(null); // Clear component view if refining a simple string
+      setActiveView('ide');
   };
   
   const handleUseRecipe = (components: PromptComponent[]) => {
-    setInitialEditorState({ components });
-    setActiveView('ide');
+      setComponentsToEdit(components);
+      setPromptToEdit(null); // Clear simple prompt view
+      setActiveView('ide');
   };
-
-  const handleSendToAlchemist = (prompt: string) => {
-    setInitialAlchemistPrompt(prompt);
-    setActiveView('alchemist');
-  };
-
-  const onInitialStateLoaded = useCallback(() => {
-    setInitialEditorState(null);
-  }, []);
   
-  const onInitialAlchemistPromptLoaded = useCallback(() => {
-    setInitialAlchemistPrompt(null);
+  const handleRefineInAlchemist = (prompt: string) => {
+      setPromptToBlend(prompt);
+      setActiveView('alchemist');
+  }
+  
+  const handleInitialPromptLoaded = useCallback(() => {
+      setPromptToEdit(null);
+      setComponentsToEdit(null);
+      setPromptToBlend(null);
   }, []);
 
-  const renderContent = () => {
+  const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistoryItem} />;
+        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistory} />;
       case 'ide':
-        return <PromptEditor 
-          initialState={initialEditorState} 
-          onInitialStateLoaded={onInitialStateLoaded}
-          onSendToAlchemist={handleSendToAlchemist}
+        return <IDEPage 
+            initialPrompt={promptToEdit}
+            initialComponents={componentsToEdit}
+            onInitialPromptLoaded={handleInitialPromptLoaded}
+            onRefineInAlchemist={handleRefineInAlchemist}
         />;
       case 'alchemist':
-        return <AlchemistPage 
+        return <AlchemistPage
           onRefineInIDE={handleRefineInIDE}
           onUseRecipe={handleUseRecipe}
-          initialBasePrompt={initialAlchemistPrompt}
-          onInitialBasePromptLoaded={onInitialAlchemistPromptLoaded}
+          initialBasePrompt={promptToBlend}
+          onInitialBasePromptLoaded={handleInitialPromptLoaded}
         />;
       case 'appearance':
         return <AppearancePage />;
       default:
-        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistoryItem}/>;
+        return <Dashboard onStartChallenge={handleStartChallenge} onSelectHistory={handleSelectHistory} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-background text-text-main font-sans">
+    <div className="flex h-screen bg-background text-text-main font-body">
       <Sidebar activeView={activeView} onNavigate={handleNavigate} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-grow flex flex-col">
         <Header />
-        <main className="flex-1 overflow-y-auto p-8">
-          {renderContent()}
+        <main className="flex-grow p-8 overflow-y-auto">
+          {renderActiveView()}
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
-}
+};
 
 export default App;

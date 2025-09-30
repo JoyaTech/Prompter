@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './i18n';
 import { ThemeProvider } from './components/ThemeContext';
+// FIX: Corrected import path for AppContext component.
 import { AppProvider } from './components/AppContext';
 
 const rootElement = document.getElementById('root');

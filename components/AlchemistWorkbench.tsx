@@ -1,91 +1,157 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { v4 as uuidv4 } from 'uuid';
-import { Essence, PromptComponent } from '../types';
+import { Essence } from '../types';
 import { blendPrompt } from '../services/geminiService';
-import { SparklesIcon, TrashIcon, PlusIcon } from './icons';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { MoveIcon, TrashIcon, SparklesIcon, SaveIcon, SendIcon, WandIcon } from './icons';
+import SavePromptModal from './SavePromptModal';
 
-interface AlchemistWorkbenchProps {
-    basePrompt: string;
-    essences: Essence[];
-    onUpdateBasePrompt: (prompt: string) => void;
-    onUpdateEssences: (essences: Essence[]) => void;
-    onClearWorkbench: () => void;
-    onSavePrompt: (name: string, text: string) => void;
-    onRefineInIDE: (prompt: string) => void;
+interface SortableEssenceProps {
+  id: string;
+  text: string;
+  onUpdate: (id: string, text: string) => void;
+  onRemove: (id: string) => void;
 }
 
-const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({
-    basePrompt,
-    essences,
-    onUpdateBasePrompt,
-    onUpdateEssences,
-    onClearWorkbench,
-    onSavePrompt,
-    onRefineInIDE
-}) => {
-    const { t } = useTranslation();
-    const [blendedPrompt, setBlendedPrompt] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+const SortableEssence: React.FC<SortableEssenceProps> = ({ id, text, onUpdate, onRemove }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
 
-    const handleBlend = async () => {
-        if (!basePrompt) return;
-        setIsLoading(true);
-        try {
-            const response = await blendPrompt(basePrompt, essences.map(e => e.text));
-            setBlendedPrompt(response.text ?? '');
-        } catch (error) {
-            console.error(error);
-            setBlendedPrompt("Error blending prompt.");
-        }
-        setIsLoading(false);
-    };
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 bg-background p-2 rounded-md">
+      <div {...attributes} {...listeners} className="cursor-grab p-1 text-text-secondary">
+        <MoveIcon className="w-5 h-5" />
+      </div>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => onUpdate(id, e.target.value)}
+        className="flex-grow bg-transparent focus:outline-none text-sm"
+      />
+      <button onClick={() => onRemove(id)} className="p-1 text-text-secondary hover:text-red-400">
+        <TrashIcon className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
 
-    const addEssence = () => onUpdateEssences([...essences, { id: uuidv4(), text: '' }]);
-    const updateEssence = (id: string, text: string) => onUpdateEssences(essences.map(e => e.id === id ? { ...e, text } : e));
-    const removeEssence = (id: string) => onUpdateEssences(essences.filter(e => e.id !== id));
-    
-    return (
-        <div className="bg-card p-4 rounded-lg border border-border-color h-full flex flex-col">
-            <h3 className="text-lg font-semibold text-text-main mb-3">{t('alchemist_workbench_title')}</h3>
-            <div className="grid grid-cols-2 gap-4 flex-grow overflow-y-auto">
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-sm font-semibold text-text-secondary mb-2 block">{t('alchemist_workbench_base')}</label>
-                        <textarea value={basePrompt} onChange={e => onUpdateBasePrompt(e.target.value)} placeholder={t('alchemist_workbench_base_placeholder')} className="w-full h-32 p-2 bg-background border border-border-color rounded-md text-sm resize-y" />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-text-secondary mb-2 block">{t('alchemist_workbench_essences')}</label>
-                        <div className="space-y-2">
-                            {essences.map(essence => (
-                                <div key={essence.id} className="flex items-center gap-2">
-                                    <input value={essence.text} onChange={e => updateEssence(essence.id, e.target.value)} className="w-full p-2 bg-background border border-border-color rounded-md text-sm" />
-                                    <button onClick={() => removeEssence(essence.id)} className="p-2 text-text-secondary hover:text-red-400"><TrashIcon className="w-4 h-4" /></button>
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={addEssence} className="mt-2 flex items-center gap-2 text-sm text-accent"><PlusIcon className="w-4 h-4"/> Add Essence</button>
-                    </div>
+interface AlchemistWorkbenchProps {
+  basePrompt: string;
+  essences: Essence[];
+  onUpdateBasePrompt: (prompt: string) => void;
+  onUpdateEssences: (essences: Essence[]) => void;
+  onClearWorkbench: () => void;
+  onSavePrompt: (name: string, text: string) => void;
+  onRefineInIDE: (prompt: string) => void;
+}
+
+const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({ basePrompt, essences, onUpdateBasePrompt, onUpdateEssences, onClearWorkbench, onSavePrompt, onRefineInIDE }) => {
+  const { t } = useTranslation();
+  const [blendedPrompt, setBlendedPrompt] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+  const handleUpdateEssence = (id: string, text: string) => {
+    onUpdateEssences(essences.map(e => (e.id === id ? { ...e, text } : e)));
+  };
+  
+  const handleRemoveEssence = (id: string) => {
+    onUpdateEssences(essences.filter(e => e.id !== id));
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = essences.findIndex(e => e.id === active.id);
+      const newIndex = essences.findIndex(e => e.id === over.id);
+      onUpdateEssences(arrayMove(essences, oldIndex, newIndex));
+    }
+  };
+  
+  const handleBlend = async () => {
+    if (!basePrompt) return;
+    setIsLoading(true);
+    setBlendedPrompt('');
+    try {
+      const response = await blendPrompt(basePrompt, essences.map(e => e.text));
+      setBlendedPrompt(response.text);
+    } catch (error) {
+      console.error("Blending failed:", error);
+      setBlendedPrompt("An error occurred during blending.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="bg-card p-4 rounded-lg border border-border-color h-full flex flex-col">
+        <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold text-text-main">{t('alchemist_workbench_title')}</h3>
+            <div className="flex items-center gap-2">
+                <button onClick={onClearWorkbench} className="px-3 py-1.5 text-xs font-semibold bg-card-secondary text-text-secondary rounded-md hover:bg-border-color hover:text-text-main transition-colors">
+                    {t('alchemist_clear_button')}
+                </button>
+                 <button onClick={handleBlend} disabled={!basePrompt || isLoading} className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary/90 disabled:bg-primary/50 disabled:cursor-not-allowed transition-colors">
+                    <WandIcon className="w-5 h-5"/>
+                    {isLoading ? t('status_generating') : t('alchemist_blend_button')}
+                </button>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow overflow-y-auto pr-2">
+            <div className="space-y-4">
+                <div>
+                    <label className="text-sm font-semibold text-text-secondary">{t('alchemist_base_prompt_label')}</label>
+                    <textarea value={basePrompt} onChange={e => onUpdateBasePrompt(e.target.value)} className="w-full mt-1 h-24 p-2 bg-background border border-border-color rounded-md" />
                 </div>
-                <div className="flex flex-col">
-                    <label className="text-sm font-semibold text-text-secondary mb-2 block">{t('alchemist_workbench_result')}</label>
-                    <div className="flex-grow bg-background p-3 rounded-md border border-border-color text-sm whitespace-pre-wrap overflow-y-auto">
-                        {blendedPrompt}
-                    </div>
+                 <div>
+                    <label className="text-sm font-semibold text-text-secondary">{t('alchemist_essences_label')}</label>
+                    <p className="text-xs text-text-secondary/80 mb-2">{t('alchemist_essences_desc')}</p>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={essences} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-2">
+                                {essences.map(e => <SortableEssence key={e.id} id={e.id} text={e.text} onUpdate={handleUpdateEssence} onRemove={handleRemoveEssence} />)}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-border-color flex justify-between items-center">
-                <button onClick={onClearWorkbench} className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-text-main">{t('alchemist_workbench_clear')}</button>
-                <div className="flex items-center gap-3">
-                    <button onClick={() => onRefineInIDE(blendedPrompt)} disabled={!blendedPrompt} className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-text-main disabled:opacity-50">Refine in IDE</button>
-                    <button onClick={handleBlend} disabled={isLoading || !basePrompt} className="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-md hover:bg-primary/90 disabled:bg-primary/50 flex items-center gap-2">
-                        <SparklesIcon className="w-5 h-5"/>
-                        {isLoading ? t('alchemist_workbench_blending') : t('alchemist_workbench_blend')}
-                    </button>
+            
+            <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-1">
+                    <h4 className="text-sm font-semibold text-text-secondary">Blended Prompt</h4>
+                    {blendedPrompt && (
+                        <div className="flex items-center gap-2">
+                             <button onClick={() => setIsSaveModalOpen(true)} title="Save Prompt" className="p-1 text-text-secondary hover:text-primary"><SaveIcon className="w-4 h-4"/></button>
+                             <button onClick={() => onRefineInIDE(blendedPrompt)} title={t('alchemist_refine_ide')} className="p-1 text-text-secondary hover:text-primary"><SendIcon className="w-4 h-4"/></button>
+                        </div>
+                    )}
+                </div>
+                <div className="flex-grow bg-background rounded-md p-3 text-sm text-text-main whitespace-pre-wrap overflow-y-auto">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-full text-text-secondary">
+                             <SparklesIcon className="w-6 h-6 animate-pulse text-primary mr-2" />
+                             Blending...
+                        </div>
+                    ) : (blendedPrompt || "Your blended prompt will appear here.")}
                 </div>
             </div>
         </div>
-    );
+      </div>
+      {blendedPrompt && 
+        <SavePromptModal
+            isOpen={isSaveModalOpen}
+            onClose={() => setIsSaveModalOpen(false)}
+            promptText={blendedPrompt}
+        />
+      }
+    </>
+  );
 };
 
 export default AlchemistWorkbench;
