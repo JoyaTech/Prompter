@@ -67,8 +67,9 @@ export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
 };
 
 // FIX: The previous source for engineering prompts was returning a 404 error.
-// Switched to a new, reliable source and updated the CSV parser to match its format.
-const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/ahmedbesbes/chatgpt-prompts-extra/main/prompts.csv';
+// Switched to a new, reliable source from LINE Corp and updated the author attribution.
+// The existing CSV parser is robust enough for the new format.
+const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/line/prompt-engineering-template/main/prompts.csv';
 
 export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
     try {
@@ -83,12 +84,11 @@ export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
         for (const line of lines) {
             if (!line.trim()) continue; // Skip empty lines
             
-            // A more robust regex-based parser for CSV format: "Category","Subcategory","Prompt Name","Prompt"
-            // This handles cases where commas might exist within the quoted fields.
+            // A more robust regex-based parser for CSV format that handles quoted and unquoted fields.
             const parts = line.match(/(".*?"|[^",\n\r]+)(?=\s*,|\s*$)/g);
             
             if (parts && parts.length === 4) {
-                // Strip outer quotes from each part
+                // Strip outer quotes from each part if they exist
                 const [category, subcategory, title, promptText] = parts.map(p => 
                     p.startsWith('"') && p.endsWith('"') ? p.slice(1, -1) : p
                 );
@@ -104,7 +104,7 @@ export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
                     name: finalTitle,
                     prompt: finalPromptText,
                     description: `Category: ${finalCategory} - ${finalSubcategory}.`,
-                    author: 'A. Besbes',
+                    author: 'LINE Corp',
                     downloads: 0,
                     tags: [finalCategory.toLowerCase(), finalSubcategory.toLowerCase(), 'engineering'],
                 });
