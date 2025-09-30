@@ -50,7 +50,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTester, setShowTester] = useState(false);
-  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+  const [activeHistoryItem, setActiveHistoryItem] = useState<HistoryItem | null>(null);
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [isSaveRecipeModalOpen, setIsSaveRecipeModalOpen] = useState(false);
 
@@ -82,7 +82,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     setIsLoading(true);
     setError(null);
     setOutput('');
-    setActiveHistoryId(null);
+    setActiveHistoryItem(null);
 
     try {
       const response = await generateContent(finalPrompt);
@@ -90,7 +90,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
       setOutput(responseText);
       const alignmentNotes = await analyzeAlignment(finalPrompt, responseText);
       const newHistoryItem = onAddHistory(finalPrompt, responseText, alignmentNotes);
-      setActiveHistoryId(newHistoryItem.id);
+      setActiveHistoryItem(newHistoryItem);
     } catch (err) {
       console.error(err);
       setError(t('error_generation_failed'));
@@ -110,15 +110,22 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const handleSelectPrompt = (promptText: string) => {
     setComponents([{ id: uuidv4(), type: 'text', content: promptText }]);
     setOutput('');
-    setActiveHistoryId(null);
+    setActiveHistoryItem(null);
   };
   
   const handleSelectHistory = (item: HistoryItem) => {
     setComponents([{ id: uuidv4(), type: 'text', content: item.prompt }]);
     setOutput(item.response);
-    setActiveHistoryId(item.id);
+    setActiveHistoryItem(item);
   }
   
+  const handleUpdateHistoryItemWrapper = (id: string, updates: Partial<HistoryItem>) => {
+    onUpdateHistoryItem(id, updates);
+    if(activeHistoryItem && activeHistoryItem.id === id) {
+        setActiveHistoryItem(prev => prev ? {...prev, ...updates} : null);
+    }
+  }
+
   const handleSaveRecipe = (recipe: Omit<PromptRecipe, 'id'>) => {
     onSaveRecipe(recipe);
     setIsSaveRecipeModalOpen(false);
@@ -140,7 +147,12 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           </div>
 
           {isComparisonMode ? (
-            <ComparisonEditor onAddHistory={onAddHistory} onUpdateHistoryItem={onUpdateHistoryItem} t={t} />
+            <ComparisonEditor 
+              onAddHistory={onAddHistory} 
+              onUpdateHistoryItem={onUpdateHistoryItem}
+              onSavePrompt={onSavePrompt}
+              t={t} 
+            />
           ) : (
             <>
               <div className="flex-grow flex flex-col gap-6">
@@ -194,8 +206,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   output={output}
                   isLoading={isLoading}
                   prompt={finalPrompt}
-                  historyId={activeHistoryId}
-                  onUpdateHistoryItem={onUpdateHistoryItem}
+                  historyItem={activeHistoryItem}
+                  onUpdateHistoryItem={handleUpdateHistoryItemWrapper}
                   t={t}
                 />
               </div>

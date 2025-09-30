@@ -1,4 +1,4 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { TemplateFields } from '../types';
 
 // Per instructions, API key must be from process.env.API_KEY
@@ -116,5 +116,57 @@ Combine these elements into a single, cohesive, and powerful new prompt. Return 
     } catch (error) {
         console.error("Error blending prompt:", error);
         throw new Error("Failed to blend prompt using Gemini API.");
+    }
+};
+
+/**
+ * Generates two distinct prompt variations from a single idea for A/B testing.
+ * @param idea The core concept provided by the user.
+ * @returns An object containing two prompt strings, promptA and promptB.
+ */
+export const generatePromptVariations = async (idea: string): Promise<{ promptA: string; promptB: string }> => {
+    const variationInstruction = `
+You are an expert Prompt Engineer tasked with creating two distinct variations of a prompt for A/B testing.
+Based on the user's core idea, create two different prompts. They should aim for the same goal but use different approaches.
+For example, one could be direct and instructional, while the other is more creative and persona-driven.
+The core idea is: "${idea}"
+Return the two prompts in a JSON object.
+`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: variationInstruction,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        promptA: {
+                            type: Type.STRING,
+                            description: "The first prompt variation."
+                        },
+                        promptB: {
+                            type: Type.STRING,
+                            description: "The second, different prompt variation."
+                        },
+                    },
+                    required: ["promptA", "promptB"],
+                },
+            },
+        });
+        
+        const jsonText = response.text.trim();
+        const variations = JSON.parse(jsonText);
+
+        if (variations && typeof variations.promptA === 'string' && typeof variations.promptB === 'string') {
+            return variations;
+        } else {
+            throw new Error("Invalid JSON structure received from API.");
+        }
+
+    } catch (error) {
+        console.error("Error generating prompt variations:", error);
+        throw new Error("Failed to generate prompt variations using Gemini API.");
     }
 };

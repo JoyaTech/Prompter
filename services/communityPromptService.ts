@@ -66,35 +66,47 @@ export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
     }
 };
 
-// FIX: Switched to GitHub API endpoint as the raw URL was returning a 404 error.
-const ENGINEERING_PROMPTS_URL = 'https://api.github.com/repos/prm-engineering/chat-gpt-prompts/contents/prompts.json';
+// FIX: The previous source for engineering prompts (prm-engineering/chat-gpt-prompts) was deleted, causing a 404.
+// Switched to a new, high-quality source from LINE Corp and updated the CSV parser accordingly.
+const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/line/prompt-engineering-template/main/prompts.csv';
 
 export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
     try {
-        const response = await fetch(ENGINEERING_PROMPTS_URL, {
-            headers: {
-                // Best practice to specify the API version for GitHub API
-                'Accept': 'application/vnd.github.v3+json',
-            }
-        });
+        const response = await fetch(ENGINEERING_PROMPTS_URL);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const apiResponse = await response.json();
-        
-        // Content from the GitHub API is Base64 encoded. We need to decode it.
-        const decodedContent = atob(apiResponse.content);
-        const json = JSON.parse(decodedContent);
+        const csvText = await response.text();
+        const lines = csvText.trim().split('\n').slice(1); // remove header
+        const prompts: CommunityPrompt[] = [];
 
-        const prompts: CommunityPrompt[] = json.map((item: { title: string, prompt: string }) => ({
-            id: `eng-${item.title.replace(/\s+/g, '-').toLowerCase()}`,
-            name: item.title,
-            prompt: item.prompt,
-            description: item.prompt.substring(0, 100) + (item.prompt.length > 100 ? '...' : ''),
-            author: 'prm-engineering',
-            downloads: 0,
-            tags: ['engineering', 'professional'],
-        }));
+        for (const line of lines) {
+            if (!line.trim()) continue; // Skip empty lines
+            
+            // Simple parser for `"category","title","prompt"` format
+            if (line.startsWith('"') && line.endsWith('"')) {
+                const content = line.slice(1, -1); // Remove start/end quotes
+                const parts = content.split('","');
+                
+                if (parts.length === 3) {
+                    const [category, title, promptText] = parts;
+                    // Unescape double quotes "" -> " if any exist.
+                    const finalPromptText = promptText.replace(/""/g, '"');
+                    const finalCategory = category.replace(/""/g, '"');
+                    const finalTitle = title.replace(/""/g, '"');
+
+                    prompts.push({
+                        id: `eng-${finalTitle.replace(/\s+/g, '-').toLowerCase()}`,
+                        name: finalTitle,
+                        prompt: finalPromptText,
+                        description: finalPromptText.substring(0, 100) + (finalPromptText.length > 100 ? '...' : ''),
+                        author: 'LINE Corp',
+                        downloads: 0,
+                        tags: [finalCategory.toLowerCase(), 'engineering', 'professional'],
+                    });
+                }
+            }
+        }
         return prompts;
     } catch (error) {
         console.error("Failed to fetch Engineering prompts:", error);

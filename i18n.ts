@@ -105,6 +105,14 @@ const resources = {
       "comparison_prompt_b": "Prompt B",
       "comparison_run": "Run Comparison",
       "comparison_running": "Running...",
+      "button_generate_variations": "Generate Variations from Idea",
+      "variations_modal_title": "Generate Prompt Variations",
+      "variations_modal_desc": "Enter a core idea, and the AI will generate two distinct prompts for you to A/B test.",
+      "variations_modal_idea_label": "Core Idea or Topic",
+      "variations_modal_generate_button": "Generate Variations",
+      "comparison_declare_winner": "Declare Winner",
+      "comparison_higher_rated": "Higher Rated",
+      "comparison_winner_prompt_name": "[Winner] A/B Test"
     }
   },
   he: {
@@ -208,7 +216,15 @@ const resources = {
       "comparison_prompt_a": "פרומפט א'",
       "comparison_prompt_b": "פרומפט ב'",
       "comparison_run": "הרץ השוואה",
-      "comparison_running": "מריץ..."
+      "comparison_running": "מריץ...",
+      "button_generate_variations": "צור וריאציות מרעיון",
+      "variations_modal_title": "יצירת וריאציות לפרומפט",
+      "variations_modal_desc": "הזן רעיון מרכזי, והבינה המלאכותית תיצור שתי וריאציות פרומפט שונות עבורך לבדיקת A/B.",
+      "variations_modal_idea_label": "רעיון מרכזי או נושא",
+      "variations_modal_generate_button": "צור וריאציות",
+      "comparison_declare_winner": "הכרז על מנצח",
+      "comparison_higher_rated": "דירוג גבוה יותר",
+      "comparison_winner_prompt_name": "[מנצח] מבחן A/B"
     }
   }
 };

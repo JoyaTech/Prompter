@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,8 +9,10 @@ interface OutputDisplayProps {
   output: string;
   isLoading: boolean;
   prompt: string;
-  historyId: string | null;
+  historyItem: HistoryItem | null;
   onUpdateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
+  onDeclareWinner?: (promptText: string) => void;
+  competingRating?: number;
   t: (key: string) => string;
 }
 
@@ -57,11 +58,23 @@ const FeedbackCollector: React.FC<{ historyId: string; onUpdateHistoryItem: Outp
     );
 };
 
-const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt, historyId, onUpdateHistoryItem, t }) => {
+const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt, historyItem, onUpdateHistoryItem, onDeclareWinner, competingRating, t }) => {
+  const showHigherRatedBadge = 
+    historyItem?.rating &&
+    typeof competingRating === 'number' &&
+    historyItem.rating >= competingRating + 2;
+
   return (
     <div className="bg-card p-4 rounded-lg border border-border-color flex-grow flex flex-col">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-semibold text-text-main">{t('output_title')}</h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-text-main">{t('output_title')}</h3>
+          {showHigherRatedBadge && (
+            <span className="px-2 py-0.5 text-xs font-bold text-green-300 bg-green-800/50 rounded-full">
+              {t('comparison_higher_rated')}
+            </span>
+          )}
+        </div>
         {output && !isLoading && <CopyButton textToCopy={output} />}
       </div>
       <div className="prose prose-invert prose-sm max-w-none bg-background rounded-md p-4 overflow-y-auto flex-grow">
@@ -80,13 +93,20 @@ const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, prompt
       </div>
        {prompt && !isLoading && (
         <div className="mt-4 p-3 bg-background rounded-md border border-border-color">
-            <p className="text-xs text-text-secondary font-semibold mb-1">{t('prompt_used_label')}</p>
-            <p className="text-xs text-text-secondary whitespace-pre-wrap font-mono">{prompt}</p>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-text-secondary font-semibold mb-1">{t('prompt_used_label')}</p>
+              {onDeclareWinner && (
+                <button onClick={() => onDeclareWinner(prompt)} className="px-3 py-1 text-xs font-semibold bg-accent/80 text-background rounded-md hover:bg-accent transition-colors">
+                  🏆 {t('comparison_declare_winner')}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-text-secondary whitespace-pre-wrap font-mono mt-1">{prompt}</p>
         </div>
        )}
-       {output && !isLoading && historyId && (
+       {output && !isLoading && historyItem && (
         <div className="mt-4 pt-4 border-t border-border-color">
-            <FeedbackCollector historyId={historyId} onUpdateHistoryItem={onUpdateHistoryItem} t={t} />
+            <FeedbackCollector historyId={historyItem.id} onUpdateHistoryItem={onUpdateHistoryItem} t={t} />
         </div>
        )}
     </div>
