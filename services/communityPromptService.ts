@@ -66,9 +66,9 @@ export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
     }
 };
 
-// FIX: The previous source for engineering prompts (prm-engineering/chat-gpt-prompts) was deleted, causing a 404.
-// Switched to a new, high-quality source from LINE Corp and updated the CSV parser accordingly.
-const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/line/prompt-engineering-template/main/prompts.csv';
+// FIX: The previous source for engineering prompts was returning a 404 error.
+// Switched to a new, reliable source and updated the CSV parser to match its format.
+const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/ahmedbesbes/chatgpt-prompts-extra/main/prompts.csv';
 
 export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
     try {
@@ -83,28 +83,31 @@ export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
         for (const line of lines) {
             if (!line.trim()) continue; // Skip empty lines
             
-            // Simple parser for `"category","title","prompt"` format
-            if (line.startsWith('"') && line.endsWith('"')) {
-                const content = line.slice(1, -1); // Remove start/end quotes
-                const parts = content.split('","');
-                
-                if (parts.length === 3) {
-                    const [category, title, promptText] = parts;
-                    // Unescape double quotes "" -> " if any exist.
-                    const finalPromptText = promptText.replace(/""/g, '"');
-                    const finalCategory = category.replace(/""/g, '"');
-                    const finalTitle = title.replace(/""/g, '"');
+            // A more robust regex-based parser for CSV format: "Category","Subcategory","Prompt Name","Prompt"
+            // This handles cases where commas might exist within the quoted fields.
+            const parts = line.match(/(".*?"|[^",\n\r]+)(?=\s*,|\s*$)/g);
+            
+            if (parts && parts.length === 4) {
+                // Strip outer quotes from each part
+                const [category, subcategory, title, promptText] = parts.map(p => 
+                    p.startsWith('"') && p.endsWith('"') ? p.slice(1, -1) : p
+                );
 
-                    prompts.push({
-                        id: `eng-${finalTitle.replace(/\s+/g, '-').toLowerCase()}`,
-                        name: finalTitle,
-                        prompt: finalPromptText,
-                        description: finalPromptText.substring(0, 100) + (finalPromptText.length > 100 ? '...' : ''),
-                        author: 'LINE Corp',
-                        downloads: 0,
-                        tags: [finalCategory.toLowerCase(), 'engineering', 'professional'],
-                    });
-                }
+                // Unescape double quotes ("") within a field
+                const finalPromptText = promptText.replace(/""/g, '"');
+                const finalCategory = category.replace(/""/g, '"');
+                const finalSubcategory = subcategory.replace(/""/g, '"');
+                const finalTitle = title.replace(/""/g, '"');
+
+                prompts.push({
+                    id: `eng-${finalTitle.replace(/\s+/g, '-').toLowerCase()}`,
+                    name: finalTitle,
+                    prompt: finalPromptText,
+                    description: `Category: ${finalCategory} - ${finalSubcategory}.`,
+                    author: 'A. Besbes',
+                    downloads: 0,
+                    tags: [finalCategory.toLowerCase(), finalSubcategory.toLowerCase(), 'engineering'],
+                });
             }
         }
         return prompts;
@@ -113,6 +116,7 @@ export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
         return [];
     }
 }
+
 
 const MOCK_HEBREW_PROMPTS: CommunityPrompt[] = [
     {
