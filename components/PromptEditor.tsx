@@ -6,7 +6,7 @@ import OutputDisplay from './OutputDisplay';
 import SavedPrompts from './SavedPrompts';
 import History from './History';
 import PromptUnitTester from './PromptUnitTester';
-import { SaveIcon, SparklesIcon } from './icons';
+import { SaveIcon, SparklesIcon, AlembicIcon } from './icons';
 import ComparisonEditor from './ComparisonEditor';
 import VisualPromptBuilder from './VisualPromptBuilder';
 
@@ -18,8 +18,9 @@ interface PromptEditorProps {
   onAddHistory: (prompt: string, response: string, alignmentNotes?: string) => HistoryItemType;
   onDeleteHistory: (id: string) => void;
   onUpdateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
-  challengeToLoad: string | null;
-  onChallengeLoaded: () => void;
+  initialPromptText: string | null;
+  onInitialPromptLoaded: () => void;
+  onSendToAlchemist: (prompt: string) => void;
   t: (key: string) => string;
 }
 
@@ -31,8 +32,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   onAddHistory,
   onDeleteHistory,
   onUpdateHistoryItem,
-  challengeToLoad,
-  onChallengeLoaded,
+  initialPromptText,
+  onInitialPromptLoaded,
+  onSendToAlchemist,
   t,
 }) => {
   const [components, setComponents] = useState<PromptComponent[]>([]);
@@ -51,11 +53,11 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
 
 
   useEffect(() => {
-    if (challengeToLoad) {
-      setComponents([{ id: uuidv4(), type: 'context', content: challengeToLoad }]);
-      onChallengeLoaded();
+    if (initialPromptText) {
+      setComponents([{ id: uuidv4(), type: 'text', content: initialPromptText }]);
+      onInitialPromptLoaded();
     }
-  }, [challengeToLoad, onChallengeLoaded]);
+  }, [initialPromptText, onInitialPromptLoaded]);
 
   const handleGenerate = async () => {
     if (!finalPrompt) {
@@ -139,6 +141,14 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   >
                     <SaveIcon className="w-5 h-5" />
                     {t('button_save')}
+                  </button>
+                   <button
+                    onClick={() => onSendToAlchemist(finalPrompt)}
+                    disabled={!finalPrompt}
+                    className="px-5 py-2.5 bg-card-secondary text-text-main font-semibold rounded-lg hover:bg-border-color transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={t('ide_send_to_alchemist')}
+                  >
+                    <AlembicIcon className="w-5 h-5" />
                   </button>
                 </div>
                  <button

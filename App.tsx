@@ -18,7 +18,8 @@ const App: React.FC = () => {
   const [view, setView] = useState('editor');
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [challengeToLoad, setChallengeToLoad] = useState<string | null>(null);
+  const [initialPromptText, setInitialPromptText] = useState<string | null>(null);
+  const [promptForAlchemist, setPromptForAlchemist] = useState<string | null>(null);
 
   useEffect(() => {
     setPrompts(dataService.getPrompts());
@@ -27,13 +28,15 @@ const App: React.FC = () => {
     // Demonstrate loading a challenge
     const hasSeenChallenge = localStorage.getItem('seen-challenge');
     if (!hasSeenChallenge) {
-      setChallengeToLoad(CHALLENGE_PROMPT);
+      setInitialPromptText(CHALLENGE_PROMPT);
     }
   }, []);
   
-  const handleChallengeLoaded = () => {
-    setChallengeToLoad(null);
-    localStorage.setItem('seen-challenge', 'true');
+  const handleInitialPromptLoaded = () => {
+    if (initialPromptText === CHALLENGE_PROMPT) {
+        localStorage.setItem('seen-challenge', 'true');
+    }
+    setInitialPromptText(null);
   };
 
   const handleSavePrompt = (name: string, text: string) => {
@@ -77,6 +80,16 @@ const App: React.FC = () => {
     dataService.saveHistory(updatedHistory);
   };
 
+  const handleNavigateToEditorWithPrompt = (prompt: string) => {
+    setView('editor');
+    setInitialPromptText(prompt);
+  };
+  
+  const handleNavigateToAlchemistWithPrompt = (prompt: string) => {
+    setView('alchemist');
+    setPromptForAlchemist(prompt);
+  };
+
   const renderView = () => {
     switch (view) {
       case 'dashboard':
@@ -90,14 +103,21 @@ const App: React.FC = () => {
           onAddHistory={handleAddHistory}
           onDeleteHistory={handleDeleteHistory}
           onUpdateHistoryItem={handleUpdateHistoryItem}
-          challengeToLoad={challengeToLoad}
-          onChallengeLoaded={handleChallengeLoaded}
+          initialPromptText={initialPromptText}
+          onInitialPromptLoaded={handleInitialPromptLoaded}
+          onSendToAlchemist={handleNavigateToAlchemistWithPrompt}
           t={t}
         />;
       case 'theme':
         return <ThemeCustomizer />;
       case 'alchemist':
-        return <AlchemistPage t={t} onSavePrompt={handleSavePrompt} />;
+        return <AlchemistPage 
+          t={t} 
+          onSavePrompt={handleSavePrompt} 
+          onRefineInIDE={handleNavigateToEditorWithPrompt}
+          initialBasePrompt={promptForAlchemist}
+          onInitialBasePromptLoaded={() => setPromptForAlchemist(null)}
+        />;
       default:
         return <Dashboard history={history} t={t} />;
     }

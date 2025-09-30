@@ -9,7 +9,7 @@ interface AlchemistLibraryProps {
     onAddToWorkbench: (prompt: string) => void;
 }
 
-type PromptSource = 'genspark' | 'awesome-chatgpt';
+type PromptSource = 'genspark' | 'awesome-chatgpt' | 'engineering';
 
 const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ t, onSavePrompt, onAddToWorkbench }) => {
     const [prompts, setPrompts] = useState<CommunityPrompt[]>([]);
@@ -21,9 +21,18 @@ const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ t, onSavePrompt, on
         const fetchPrompts = async () => {
             setLoading(true);
             setPrompts([]); // Clear previous prompts
-            const communityPrompts = source === 'genspark'
-                ? await communityPromptService.getGenSparkPrompts()
-                : await communityPromptService.fetchAwesomePrompts();
+            let communityPrompts: CommunityPrompt[] = [];
+            switch (source) {
+                case 'genspark':
+                    communityPrompts = await communityPromptService.getGenSparkPrompts();
+                    break;
+                case 'awesome-chatgpt':
+                    communityPrompts = await communityPromptService.fetchAwesomePrompts();
+                    break;
+                case 'engineering':
+                    communityPrompts = await communityPromptService.fetchEngineeringPrompts();
+                    break;
+            }
             setPrompts(communityPrompts);
             setLoading(false);
         };
@@ -38,19 +47,20 @@ const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ t, onSavePrompt, on
 
     const sources: {id: PromptSource, name: string}[] = [
         { id: 'genspark', name: t('alchemist_source_genspark')},
-        { id: 'awesome-chatgpt', name: t('alchemist_source_awesome_chatgpt')}
+        { id: 'awesome-chatgpt', name: t('alchemist_source_awesome_chatgpt')},
+        { id: 'engineering', name: t('alchemist_source_prompt_engineering')}
     ];
 
     return (
         <div className="bg-card p-4 rounded-lg border border-border-color h-full flex flex-col">
             <h3 className="text-lg font-semibold text-text-main mb-4">{t('alchemist_library_title')}</h3>
             
-            <div className="flex items-center border-b border-border-color mb-4">
+            <div className="flex items-center border-b border-border-color mb-4 overflow-x-auto">
                  {sources.map(src => (
                     <button
                         key={src.id}
                         onClick={() => setSource(src.id)}
-                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 text-sm font-medium transition-colors flex-shrink-0 ${
                             source === src.id
                             ? 'border-b-2 border-primary text-primary'
                             : 'text-text-secondary hover:text-text-main'

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import AlchemistLibrary from './AlchemistLibrary';
 import AlchemistWorkbench from './AlchemistWorkbench';
@@ -7,11 +7,27 @@ import { Essence } from '../types';
 interface AlchemistPageProps {
   t: (key: string) => string;
   onSavePrompt: (name: string, text: string) => void;
+  onRefineInIDE: (prompt: string) => void;
+  initialBasePrompt: string | null;
+  onInitialBasePromptLoaded: () => void;
 }
 
-const AlchemistPage: React.FC<AlchemistPageProps> = ({ t, onSavePrompt }) => {
+const AlchemistPage: React.FC<AlchemistPageProps> = ({ 
+  t, 
+  onSavePrompt, 
+  onRefineInIDE,
+  initialBasePrompt,
+  onInitialBasePromptLoaded
+}) => {
   const [basePrompt, setBasePrompt] = useState<string>('');
   const [essences, setEssences] = useState<Essence[]>([]);
+
+  useEffect(() => {
+    if(initialBasePrompt) {
+      setBasePrompt(initialBasePrompt);
+      onInitialBasePromptLoaded();
+    }
+  }, [initialBasePrompt, onInitialBasePromptLoaded]);
 
   const handleAddToWorkbench = (promptText: string) => {
     if (!basePrompt.trim()) {
@@ -49,6 +65,7 @@ const AlchemistPage: React.FC<AlchemistPageProps> = ({ t, onSavePrompt }) => {
             onUpdateEssences={handleUpdateEssences}
             onClearWorkbench={handleClearWorkbench}
             onSavePrompt={onSavePrompt}
+            onRefineInIDE={onRefineInIDE}
           />
         </div>
       </div>

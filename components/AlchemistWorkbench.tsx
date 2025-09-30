@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Essence } from '../types';
 import { blendPrompt } from '../services/geminiService';
-import { TrashIcon, SparklesIcon, SaveIcon } from './icons';
+import { TrashIcon, SparklesIcon, SaveIcon, EditIcon } from './icons';
 import CopyButton from './CopyButton';
 
 interface AlchemistWorkbenchProps {
@@ -12,6 +12,7 @@ interface AlchemistWorkbenchProps {
     onUpdateEssences: (essences: Essence[]) => void;
     onClearWorkbench: () => void;
     onSavePrompt: (name: string, text: string) => void;
+    onRefineInIDE: (prompt: string) => void;
 }
 
 const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({ 
@@ -21,7 +22,8 @@ const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({
     onUpdateBasePrompt,
     onUpdateEssences,
     onClearWorkbench,
-    onSavePrompt
+    onSavePrompt,
+    onRefineInIDE
 }) => {
     const [brewedPrompt, setBrewedPrompt] = useState('');
     const [isBrewing, setIsBrewing] = useState(false);
@@ -124,6 +126,10 @@ const AlchemistWorkbench: React.FC<AlchemistWorkbenchProps> = ({
                                     <button onClick={handleSaveBrewedPrompt} className="px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 bg-card-secondary text-text-secondary hover:bg-border-color hover:text-text-main">
                                         <SaveIcon className="w-4 h-4"/>
                                         {t('alchemist_save_brewed')}
+                                    </button>
+                                    <button onClick={() => onRefineInIDE(brewedPrompt)} className="px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 bg-card-secondary text-text-secondary hover:bg-border-color hover:text-text-main">
+                                        <EditIcon className="w-4 h-4"/>
+                                        {t('alchemist_refine_in_ide')}
                                     </button>
                                 </div>
                             )}

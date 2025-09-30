@@ -28,11 +28,11 @@ export const getGenSparkPrompts = async (): Promise<CommunityPrompt[]> => {
     return MOCK_PROMPTS;
 };
 
-const CSV_URL = 'https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv';
+const AWESOME_PROMPTS_URL = 'https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv';
 
 export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
     try {
-        const response = await fetch(CSV_URL);
+        const response = await fetch(AWESOME_PROMPTS_URL);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -65,3 +65,28 @@ export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
         return []; // Return empty array on error to prevent UI crash
     }
 };
+
+const ENGINEERING_PROMPTS_URL = 'https://raw.githubusercontent.com/prm-engineering/chat-gpt-prompts/main/prompts.json';
+
+export const fetchEngineeringPrompts = async (): Promise<CommunityPrompt[]> => {
+    try {
+        const response = await fetch(ENGINEERING_PROMPTS_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const json = await response.json();
+        const prompts: CommunityPrompt[] = json.map((item: { title: string, prompt: string }) => ({
+            id: `eng-${item.title.replace(/\s+/g, '-').toLowerCase()}`,
+            name: item.title,
+            prompt: item.prompt,
+            description: item.prompt.substring(0, 100) + (item.prompt.length > 100 ? '...' : ''),
+            author: 'prm-engineering',
+            downloads: 0,
+            tags: ['engineering', 'professional'],
+        }));
+        return prompts;
+    } catch (error) {
+        console.error("Failed to fetch Engineering prompts:", error);
+        return [];
+    }
+}
