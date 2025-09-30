@@ -4,17 +4,18 @@ import { CommunityPrompt, PromptRecipe } from '../types';
 import * as communityPromptService from '../services/communityPromptService';
 import * as dataService from '../services/dataService';
 import { SaveIcon, UserIcon, DownloadIcon, CheckIcon, SparklesIcon, AlembicIcon } from './icons';
+import { useAppContext } from './AppContext';
 
 interface AlchemistLibraryProps {
-    onSavePrompt: (name: string, text: string) => void;
     onAddToWorkbench: (prompt: string) => void;
     onSelectRecipe: (recipe: PromptRecipe) => void;
 }
 
 type PromptSource = 'genspark' | 'awesome-chatgpt' | 'engineering' | 'hebrew' | 'recipes';
 
-const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ onSavePrompt, onAddToWorkbench, onSelectRecipe }) => {
+const AlchemistLibrary: React.FC<AlchemistLibraryProps> = ({ onAddToWorkbench, onSelectRecipe }) => {
     const { t, i18n } = useTranslation();
+    const { handleSavePrompt: onSavePrompt } = useAppContext();
     const [prompts, setPrompts] = useState<CommunityPrompt[]>([]);
     const [recipes, setRecipes] = useState<PromptRecipe[]>([]);
     const [loading, setLoading] = useState(true);

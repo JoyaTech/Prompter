@@ -5,11 +5,9 @@ import { generateContent, generatePromptVariations } from '../services/geminiSer
 import VisualPromptBuilder from './VisualPromptBuilder';
 import OutputDisplay from './OutputDisplay';
 import { SparklesIcon } from './icons';
+import { useAppContext } from './AppContext';
 
 interface ComparisonEditorProps {
-    onAddHistory: (prompt: string, response: string, alignmentNotes?: string, comparisonId?: string) => HistoryItem;
-    onUpdateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
-    onSavePrompt: (name: string, text: string) => void;
     t: (key: string) => string;
 }
 
@@ -59,7 +57,9 @@ const GenerateVariationsModal: React.FC<{
 };
 
 
-const ComparisonEditor: React.FC<ComparisonEditorProps> = ({ onAddHistory, onUpdateHistoryItem, onSavePrompt, t }) => {
+const ComparisonEditor: React.FC<ComparisonEditorProps> = ({ t }) => {
+    const { handleAddHistory: onAddHistory, handleUpdateHistoryItem: onUpdateHistoryItem, handleSavePrompt: onSavePrompt } = useAppContext();
+    
     const [componentsA, setComponentsA] = useState<PromptComponent[]>([]);
     const [componentsB, setComponentsB] = useState<PromptComponent[]>([]);
     

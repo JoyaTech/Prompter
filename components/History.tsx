@@ -2,15 +2,16 @@
 import React from 'react';
 import { HistoryItem } from '../types';
 import { TrashIcon, ShieldCheckIcon, StarIcon } from './icons';
+import { useAppContext } from './AppContext';
 
 interface HistoryProps {
-  history: HistoryItem[];
   onSelectHistory: (item: HistoryItem) => void;
-  onDeleteHistory: (id: string) => void;
   t: (key: string) => string;
 }
 
-const History: React.FC<HistoryProps> = ({ history, onSelectHistory, onDeleteHistory, t }) => {
+const History: React.FC<HistoryProps> = ({ onSelectHistory, t }) => {
+  const { history, handleDeleteHistory: onDeleteHistory } = useAppContext();
+
   if (history.length === 0) {
     return null;
   }

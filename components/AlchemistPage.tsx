@@ -4,10 +4,10 @@ import AlchemistLibrary from './AlchemistLibrary';
 import AlchemistWorkbench from './AlchemistWorkbench';
 import UseRecipeModal from './UseRecipeModal';
 import { Essence, PromptRecipe, PromptComponent } from '../types';
+import { useAppContext } from './AppContext';
 
 interface AlchemistPageProps {
   t: (key: string) => string;
-  onSavePrompt: (name: string, text: string) => void;
   onRefineInIDE: (prompt: string) => void;
   onUseRecipe: (components: PromptComponent[]) => void;
   initialBasePrompt: string | null;
@@ -16,12 +16,12 @@ interface AlchemistPageProps {
 
 const AlchemistPage: React.FC<AlchemistPageProps> = ({ 
   t, 
-  onSavePrompt, 
   onRefineInIDE,
   onUseRecipe,
   initialBasePrompt,
   onInitialBasePromptLoaded
 }) => {
+  const { handleSavePrompt: onSavePrompt } = useAppContext();
   const [basePrompt, setBasePrompt] = useState<string>('');
   const [essences, setEssences] = useState<Essence[]>([]);
   const [isUseRecipeModalOpen, setIsUseRecipeModalOpen] = useState(false);
@@ -83,7 +83,7 @@ const AlchemistPage: React.FC<AlchemistPageProps> = ({
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ height: 'calc(100vh - 200px)' }}>
           <div className="lg:col-span-1 h-full">
-            <AlchemistLibrary onSavePrompt={onSavePrompt} onAddToWorkbench={handleAddToWorkbench} onSelectRecipe={handleSelectRecipe} />
+            <AlchemistLibrary onAddToWorkbench={handleAddToWorkbench} onSelectRecipe={handleSelectRecipe} />
           </div>
           <div className="lg:col-span-2 h-full">
             <AlchemistWorkbench 

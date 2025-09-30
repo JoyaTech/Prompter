@@ -41,12 +41,11 @@ export const fetchAwesomePrompts = async (): Promise<CommunityPrompt[]> => {
         const prompts: CommunityPrompt[] = [];
 
         for (const line of lines) {
-            // This is a simple parser for the specific CSV format: "act","prompt"
-            // It assumes the prompt content itself does not contain the '","' separator
-            const separatorIndex = line.indexOf('","');
-            if (line.startsWith('"') && separatorIndex > 0) {
-                const act = line.substring(1, separatorIndex);
-                const prompt = line.substring(separatorIndex + 3, line.length - 1);
+             // A more robust parser for "act","prompt" format
+            const parts = line.match(/"(.*?)"/g);
+            if (parts && parts.length === 2) {
+                const act = parts[0].slice(1, -1).replace(/""/g, '"');
+                const prompt = parts[1].slice(1, -1).replace(/""/g, '"');
                 
                 prompts.push({
                     id: `acp-${act.replace(/\s+/g, '-').toLowerCase()}`,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { generateContent, analyzeAlignment } from '../services/geminiService';
-import { Prompt, HistoryItem, HistoryItem as HistoryItemType, PromptComponent, PromptRecipe } from '../types';
+import { HistoryItem, HistoryItem as HistoryItemType, PromptComponent, PromptRecipe } from '../types';
 import OutputDisplay from './OutputDisplay';
 import SavedPrompts from './SavedPrompts';
 import History from './History';
@@ -10,16 +10,9 @@ import { SaveIcon, SparklesIcon, AlembicIcon } from './icons';
 import ComparisonEditor from './ComparisonEditor';
 import VisualPromptBuilder from './VisualPromptBuilder';
 import SaveRecipeModal from './SaveRecipeModal';
+import { useAppContext } from './AppContext';
 
 interface PromptEditorProps {
-  prompts: Prompt[];
-  history: HistoryItem[];
-  onSavePrompt: (name: string, text: string) => void;
-  onDeletePrompt: (id: string) => void;
-  onSaveRecipe: (recipe: Omit<PromptRecipe, 'id'>) => void;
-  onAddHistory: (prompt: string, response: string, alignmentNotes?: string, comparisonId?: string) => HistoryItemType;
-  onDeleteHistory: (id: string) => void;
-  onUpdateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
   initialPromptText: string | null;
   onInitialPromptLoaded: () => void;
   initialComponents: PromptComponent[] | null;
@@ -29,14 +22,6 @@ interface PromptEditorProps {
 }
 
 const PromptEditor: React.FC<PromptEditorProps> = ({
-  prompts,
-  history,
-  onSavePrompt,
-  onDeletePrompt,
-  onSaveRecipe,
-  onAddHistory,
-  onDeleteHistory,
-  onUpdateHistoryItem,
   initialPromptText,
   onInitialPromptLoaded,
   initialComponents,
@@ -44,6 +29,14 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   onSendToAlchemist,
   t,
 }) => {
+  // FIX: Corrected destructuring to match AppContext provider's function names.
+  const { 
+    handleSavePrompt: onSavePrompt, 
+    handleSaveRecipe: onSaveRecipe,
+    handleAddHistory: onAddHistory,
+    handleUpdateHistoryItem: onUpdateHistoryItem 
+  } = useAppContext();
+
   const [components, setComponents] = useState<PromptComponent[]>([]);
   const [finalPrompt, setFinalPrompt] = useState('');
   const [output, setOutput] = useState('');
@@ -135,8 +128,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 h-full">
         <div className="md:col-span-4 lg:col-span-3 space-y-6 overflow-y-auto pr-2">
-          <SavedPrompts prompts={prompts} onSelectPrompt={handleSelectPrompt} onDeletePrompt={onDeletePrompt} t={t} />
-          <History history={history} onSelectHistory={handleSelectHistory} onDeleteHistory={onDeleteHistory} t={t} />
+          <SavedPrompts onSelectPrompt={handleSelectPrompt} t={t} />
+          <History onSelectHistory={handleSelectHistory} t={t} />
         </div>
 
         <div className="md:col-span-8 lg:col-span-9 flex flex-col gap-6">
@@ -147,12 +140,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           </div>
 
           {isComparisonMode ? (
-            <ComparisonEditor 
-              onAddHistory={onAddHistory} 
-              onUpdateHistoryItem={onUpdateHistoryItem}
-              onSavePrompt={onSavePrompt}
-              t={t} 
-            />
+            <ComparisonEditor t={t} />
           ) : (
             <>
               <div className="flex-grow flex flex-col gap-6">

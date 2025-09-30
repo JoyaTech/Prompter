@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { v4 as uuidv4 } from 'uuid';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import PromptEditor from './components/PromptEditor';
 import ThemeCustomizer from './components/ThemeCustomizer';
 import AlchemistPage from './components/AlchemistPage';
-import { Prompt, HistoryItem, PromptRecipe, PromptComponent } from './types';
-import * as dataService from './services/dataService';
+import { PromptComponent } from './types';
 
 // A simple challenge prompt to demonstrate loading.
 const CHALLENGE_PROMPT = "You are a travel agent. A customer wants to book a 7-day trip to a tropical destination for a family of four on a budget of $5000. Provide three distinct options, including flights, accommodation, and two activities for each. Present the options in a markdown table.";
@@ -16,18 +14,11 @@ const CHALLENGE_PROMPT = "You are a travel agent. A customer wants to book a 7-d
 const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [view, setView] = useState('editor');
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [recipes, setRecipes] = useState<PromptRecipe[]>([]);
   const [initialPromptText, setInitialPromptText] = useState<string | null>(null);
   const [initialComponents, setInitialComponents] = useState<PromptComponent[] | null>(null);
   const [promptForAlchemist, setPromptForAlchemist] = useState<string | null>(null);
 
   useEffect(() => {
-    setPrompts(dataService.getPrompts());
-    setHistory(dataService.getHistory());
-    setRecipes(dataService.getRecipes());
-    
     // Demonstrate loading a challenge
     const hasSeenChallenge = localStorage.getItem('seen-challenge');
     if (!hasSeenChallenge) {
@@ -51,55 +42,6 @@ const App: React.FC = () => {
     setInitialComponents(null);
   };
 
-  const handleSavePrompt = (name: string, text: string) => {
-    const newPrompt = { id: uuidv4(), name, text };
-    const updatedPrompts = [...prompts, newPrompt];
-    setPrompts(updatedPrompts);
-    dataService.savePrompts(updatedPrompts);
-  };
-
-  const handleDeletePrompt = (id: string) => {
-    const updatedPrompts = prompts.filter(p => p.id !== id);
-    setPrompts(updatedPrompts);
-    dataService.savePrompts(updatedPrompts);
-  };
-
-  const handleSaveRecipe = (recipe: Omit<PromptRecipe, 'id'>) => {
-    const newRecipe = { ...recipe, id: uuidv4() };
-    const updatedRecipes = [...recipes, newRecipe];
-    setRecipes(updatedRecipes);
-    dataService.saveRecipes(updatedRecipes);
-  };
-
-  const handleAddHistory = (prompt: string, response: string, alignmentNotes?: string, comparisonId?: string): HistoryItem => {
-    const newHistoryItem: HistoryItem = { 
-      id: uuidv4(), 
-      prompt, 
-      response, 
-      timestamp: new Date(), 
-      alignment_notes: alignmentNotes,
-      comparisonId
-    };
-    const updatedHistory = [newHistoryItem, ...history];
-    setHistory(updatedHistory);
-    dataService.saveHistory(updatedHistory);
-    return newHistoryItem;
-  };
-
-  const handleDeleteHistory = (id: string) => {
-    const updatedHistory = history.filter(h => h.id !== id);
-    setHistory(updatedHistory);
-    dataService.saveHistory(updatedHistory);
-  };
-
-  const handleUpdateHistoryItem = (id: string, updates: Partial<HistoryItem>) => {
-    const updatedHistory = history.map(item =>
-      item.id === id ? { ...item, ...updates } : item
-    );
-    setHistory(updatedHistory);
-    dataService.saveHistory(updatedHistory);
-  };
-
   const handleNavigateToEditorWithPrompt = (prompt: string) => {
     setView('editor');
     setInitialPromptText(prompt);
@@ -120,17 +62,9 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (view) {
       case 'dashboard':
-        return <Dashboard history={history} t={t} />;
+        return <Dashboard t={t} />;
       case 'editor':
         return <PromptEditor
-          prompts={prompts}
-          history={history}
-          onSavePrompt={handleSavePrompt}
-          onDeletePrompt={handleDeletePrompt}
-          onSaveRecipe={handleSaveRecipe}
-          onAddHistory={handleAddHistory}
-          onDeleteHistory={handleDeleteHistory}
-          onUpdateHistoryItem={handleUpdateHistoryItem}
           initialPromptText={initialPromptText}
           onInitialPromptLoaded={handleInitialPromptLoaded}
           initialComponents={initialComponents}
@@ -143,14 +77,13 @@ const App: React.FC = () => {
       case 'alchemist':
         return <AlchemistPage 
           t={t} 
-          onSavePrompt={handleSavePrompt} 
           onRefineInIDE={handleNavigateToEditorWithPrompt}
           onUseRecipe={handleNavigateToEditorWithComponents}
           initialBasePrompt={promptForAlchemist}
           onInitialBasePromptLoaded={() => setPromptForAlchemist(null)}
         />;
       default:
-        return <Dashboard history={history} t={t} />;
+        return <Dashboard t={t} />;
     }
   };
 
