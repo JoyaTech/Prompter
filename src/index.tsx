@@ -1,16 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// FIX: Corrected import path for App component.
 import App from './App';
-import './i18n';
-import { ThemeProvider } from './components/ThemeContext';
+import './locales/i18n'; // Initialize internationalization
+import './index.css'; // Import global styles
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+// Import theme context for CSS variables
+import { ThemeProvider } from './components/common/ThemeContext';
 
-const root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+
 root.render(
   <React.StrictMode>
     <ThemeProvider>
