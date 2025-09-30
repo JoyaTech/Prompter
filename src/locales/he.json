@@ -1,0 +1,148 @@
+{
+  "app_subtitle": "סביבת פיתוח להנדסת פרומפטים",
+  "sidebar_dashboard": "לוח בקרה",
+  "sidebar_ide": "סביבת פרומפטים",
+  "sidebar_alchemist": "אלכימאי",
+  "sidebar_music": "מוזיקה ויצירה",
+  "sidebar_adhd": "כלי ADHD",
+  "sidebar_theme": "ערכת נושא",
+  "dashboard_title": "ברוכים הבאים לאלכימאי",
+  "dashboard_desc": "הפלטפורמה הישראלית המתקדמת לניהול וארגון פרומפטים מקצועיים.",
+  "dashboard_total_runs": "סה\"כ הפעלות",
+  "dashboard_avg_response_time": "זמן תגובה ממוצע",
+  "dashboard_success_rate": "אחוז הצלחה",
+  "dashboard_recent_activity": "פעילות אחרונה",
+  "dashboard_hebrew_market": "שוק ישראלי",
+  "dashboard_business_prompts": "פרומפטים עסקיים",
+  "dashboard_creative_tools": "כלים יצירתיים",
+  
+  "saved_prompts": "פרומפטים שמורים",
+  "history": "היסטוריה",
+  "alignment_notes_title": "הערות יישור",
+  "output_title": "פלט",
+  "output_placeholder": "הפלט שנוצר יופיע כאן.",
+  "status_generating": "מייצר...",
+  "prompt_used_label": "הפרומפט הסופי שנעשה בו שימוש:",
+  "feedback_rating_label": "דרג את התגובה:",
+  "feedback_notes_placeholder": "הוסף הערות משוב אופציונליות...",
+  "feedback_save_button": "שמור משוב",
+  "feedback_thanks": "תודה על המשוב!",
+  
+  "template_role_label": "פרסונה / תפקיד",
+  "template_task_label": "משימה / מטרה",
+  "template_context_label": "הקשר / מידע",
+  "template_constraints_label": "אילוצים / כללים",
+  "prompt_placeholder": "הוראות נוספות / פרומפט חופשי...",
+  
+  "error_empty_prompt": "הפרומפט לא יכול להיות ריק. אנא מלא לפחות שדה אחד.",
+  "error_generation_failed": "אירעה שגיאה במהלך יצירת התגובה.",
+  "prompt_name_prompt": "הכנס שם עבור פרומפט זה:",
+  "prompt_name_default": "הפרומפט החדש שלי",
+  
+  "button_generate": "יצר",
+  "button_generating": "מייצר...",
+  "button_save": "שמור",
+  "button_unit_test": "בודק יחידה",
+  "button_standard_mode": "מצב רגיל",
+  "button_ab_test": "מצב בדיקת A/B",
+  
+  "tester_title": "בודק יחידה לפרומפטים",
+  "tester_desc": "הגדר מקרי בדיקה כדי לוודא את התנהגות הפרומפט שלך.",
+  "tester_input_label": "קלט",
+  "tester_expected_output_label": "פלט צפוי (מכיל)",
+  "tester_add_case": "הוסף מקרה בדיקה",
+  "tester_run_tests": "הפעל בדיקות",
+  "tester_running_tests": "רץ...",
+  "tester_results_title": "תוצאות בדיקה",
+  "tester_result_pass": "עבר",
+  "tester_result_fail": "נכשל",
+  
+  "theme_title": "מותאם ערכת נושא",
+  "theme_desc": "התאם את המראה והתחושה של האפליקציה.",
+  "theme_primary_color": "צבע ראשי",
+  "theme_accent_color": "צבע הדגשה",
+  "theme_background_color": "צבע רקע",
+  "theme_card_color": "צבע כרטיס",
+  "theme_text_color": "צבע טקסט ראשי",
+  
+  "alchemist_title": "אלכימאי הפרומפטים",
+  "alchemist_desc": "שלב, חדד והתפתח פרומפטים כדי ליצור חדשים חזקים.",
+  "alchemist_library_title": "ספרייה קהילתית",
+  "alchemist_workbench_title": "שולחן עבודה",
+  "alchemist_recipes_title": "מתכונים אלכימיים",
+  "alchemist_mixer_title": "מערבל פרומפטים",
+  "alchemist_optimizer_title": "מיטב פרומפטים",
+  
+  "music_title": "מוזיקה ויצירה",
+  "music_desc": "כלים מתמחים למוזיקאים, מפיקים ויוצרי תוכן.",
+  "music_production_title": "הפקה מוזיקלית",
+  "music_songwriting_title": "כתיבת שירים",
+  "music_practice_title": "תכנון אימונים",
+  "music_collaboration_title": "שיתוף פעולה יצירתי",
+  "music_beat_creation": "יצירת ביטים",
+  "music_mixing_guide": "מדריך מיקס",
+  "music_lyrics_helper": "עוזר כתיבת מילים",
+  
+  "adhd_title": "כלי ADHD",
+  "adhd_desc": "תכונות מותאמות לאנשים עם ADHD לשיפור פוקוס ופרודוקטיביות.",
+  "adhd_focus_mode": "מצב פוקוס",
+  "adhd_task_breakdown": "פירוק משימות",
+  "adhd_progress_tracker": "מעקב התקדמות",
+  "adhd_distraction_filter": "מסנן הפרעות",
+  "adhd_timer_integration": "שילוב טיימר",
+  "adhd_visual_organization": "ארגון ויזואלי",
+  "adhd_step_by_step": "הדרכה שלב אחר שלב",
+  
+  "hebrew_title": "תמיכה בעברית",
+  "hebrew_desc": "תכונות מיוחדות לשפה העברית ולשוק הישראלי.",
+  "hebrew_rtl_support": "תמיכה בכיווניות ימין לשמאל",
+  "hebrew_market_prompts": "פרומפטים לשוק הישראלי",
+  "hebrew_business_context": "הקשר עסקי ישראלי",
+  "hebrew_cultural_adaptation": "התאמה תרבותית",
+  
+  "categories": {
+    "sales": "מכירות",
+    "marketing": "שיווק", 
+    "content": "תוכן",
+    "business": "עסקים",
+    "creativity": "יצירתיות",
+    "music": "מוזיקה",
+    "education": "חינוך",
+    "technology": "טכנולוגיה",
+    "startup": "סטארטאפ",
+    "hebrew_market": "שוק עברי"
+  },
+  
+  "difficulty_levels": {
+    "beginner": "מתחיל",
+    "intermediate": "בינוני", 
+    "advanced": "מתקדם",
+    "expert": "מומחה"
+  },
+  
+  "search": {
+    "placeholder": "חפש פרומפטים...",
+    "filters": "מסננים",
+    "sort_by": "מיין לפי",
+    "category": "קטגוריה",
+    "difficulty": "רמת קושי",
+    "language": "שפה",
+    "clear_filters": "נקה מסננים"
+  },
+  
+  "integrations": {
+    "awesome_chatgpt": "Awesome ChatGPT Prompts",
+    "sabrina_library": "ספריית סברינה רמונוב", 
+    "promptbase": "PromptBase",
+    "hebrew_collections": "אוספים עבריים",
+    "sync_status": "מצב סינכרון",
+    "last_updated": "עודכן לאחרונה"
+  },
+  
+  "prompt_libraries": {
+    "business_hebrew": "עסקים בעברית",
+    "israeli_startups": "סטארטאפים ישראליים",
+    "hebrew_content": "תוכן עברי",
+    "israeli_culture": "תרבות ישראלית"
+  }
+}
