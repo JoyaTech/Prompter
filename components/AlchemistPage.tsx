@@ -1,12 +1,14 @@
 import React from 'react';
 import AlchemistLibrary from './AlchemistLibrary';
 import AlchemistWorkbench from './AlchemistWorkbench';
+import { Prompt } from '../types';
 
 interface AlchemistPageProps {
   t: (key: string) => string;
+  onSavePrompt: (name: string, text: string) => void;
 }
 
-const AlchemistPage: React.FC<AlchemistPageProps> = ({ t }) => {
+const AlchemistPage: React.FC<AlchemistPageProps> = ({ t, onSavePrompt }) => {
   return (
     <div className="space-y-8">
       <div>
@@ -15,7 +17,7 @@ const AlchemistPage: React.FC<AlchemistPageProps> = ({ t }) => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <AlchemistLibrary t={t} />
+          <AlchemistLibrary t={t} onSavePrompt={onSavePrompt} />
         </div>
         <div className="lg:col-span-2">
           <AlchemistWorkbench t={t} />

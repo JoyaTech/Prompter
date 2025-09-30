@@ -1,71 +1,28 @@
 {
-  "name": "alchemist-prompt-platform",
-  "description": "Advanced prompt engineering platform for the Israeli market with ADHD-friendly features and music creativity tools",
-  "version": "1.0.0",
+  "name": "copy-of-flow-it-magical",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "keywords": [
-    "prompt-engineering",
-    "ai",
-    "israeli-market",
-    "hebrew-support", 
-    "adhd-friendly",
-    "music-production",
-    "creativity-tools"
-  ],
   "scripts": {
-    "dev": "vite --host --port 5173",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host --port 4173",
-    "test": "echo 'Tests will be added in future versions' && exit 0",
-    "lint": "echo 'Linting will be added in future versions' && exit 0",
-    "format": "echo 'Formatting will be added in future versions' && exit 0",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist node_modules/.vite",
-    "prepare": "echo 'Preparing Alchemist development environment...'",
-    "analyze": "vite-bundle-analyzer dist/stats.html"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.21.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1", 
+    "react-dom": "^19.1.1",
     "uuid": "^13.0.0",
+    "polyglot.js": "^4.0.0",
     "i18next": "^25.5.2",
-    "react-i18next": "^16.0.0",
     "remark-gfm": "^4.0.1",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "react-i18next": "^16.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/uuid": "^9.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "homepage": "https://alchemist.ai",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/JoyaTech/Alchemist.git"
-  },
-  "bugs": {
-    "url": "https://github.com/JoyaTech/Alchemist/issues"
-  },
-  "author": {
-    "name": "JoyaTech",
-    "email": "support@alchemist.ai",
-    "url": "https://joyatech.com"
-  },
-  "contributors": [
-    {
-      "name": "Alchemist Community",
-      "email": "community@alchemist.ai"
-    }
-  ],
-  "license": "MIT"
+  }
 }
