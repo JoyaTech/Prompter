@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
-import { generateContent, constructPromptFromTemplate, analyzeAlignment } from '../services/geminiService';
-import { Prompt, HistoryItem, TemplateFields, HistoryItem as HistoryItemType } from '../types';
-import TemplateBuilder from './TemplateBuilder';
+import { v4 as uuidv4 } from 'uuid';
+import { generateContent, analyzeAlignment } from '../services/geminiService';
+import { Prompt, HistoryItem, HistoryItem as HistoryItemType, PromptComponent } from '../types';
 import OutputDisplay from './OutputDisplay';
 import SavedPrompts from './SavedPrompts';
 import History from './History';
 import PromptUnitTester from './PromptUnitTester';
 import { SaveIcon, SparklesIcon } from './icons';
 import ComparisonEditor from './ComparisonEditor';
+import VisualPromptBuilder from './VisualPromptBuilder';
 
 interface PromptEditorProps {
   prompts: Prompt[];
@@ -35,8 +35,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   onChallengeLoaded,
   t,
 }) => {
-  const [templateFields, setTemplateFields] = useState<TemplateFields>({ role: '', task: '', context: '', constraints: '' });
-  const [additionalInstructions, setAdditionalInstructions] = useState('');
+  const [components, setComponents] = useState<PromptComponent[]>([]);
   const [finalPrompt, setFinalPrompt] = useState('');
   const [output, setOutput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,31 +45,34 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const [isComparisonMode, setIsComparisonMode] = useState(false);
 
   useEffect(() => {
+      const promptText = components.map(c => c.content).filter(Boolean).join('\n\n');
+      setFinalPrompt(promptText);
+  }, [components]);
+
+
+  useEffect(() => {
     if (challengeToLoad) {
-      setTemplateFields(prev => ({ ...prev, context: challengeToLoad }));
-      setAdditionalInstructions('');
+      setComponents([{ id: uuidv4(), type: 'context', content: challengeToLoad }]);
       onChallengeLoaded();
     }
   }, [challengeToLoad, onChallengeLoaded]);
 
   const handleGenerate = async () => {
-    const constructedPrompt = constructPromptFromTemplate(templateFields, additionalInstructions);
-    if (!constructedPrompt) {
+    if (!finalPrompt) {
       setError(t('error_empty_prompt'));
       return;
     }
-    setFinalPrompt(constructedPrompt);
     setIsLoading(true);
     setError(null);
     setOutput('');
     setActiveHistoryId(null);
 
     try {
-      const response = await generateContent(constructedPrompt);
+      const response = await generateContent(finalPrompt);
       const responseText = response.text;
       setOutput(responseText);
-      const alignmentNotes = await analyzeAlignment(constructedPrompt, responseText);
-      const newHistoryItem = onAddHistory(constructedPrompt, responseText, alignmentNotes);
+      const alignmentNotes = await analyzeAlignment(finalPrompt, responseText);
+      const newHistoryItem = onAddHistory(finalPrompt, responseText, alignmentNotes);
       setActiveHistoryId(newHistoryItem.id);
     } catch (err) {
       console.error(err);
@@ -81,26 +83,21 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   };
 
   const handleSave = () => {
-    const constructedPrompt = constructPromptFromTemplate(templateFields, additionalInstructions);
-    if (!constructedPrompt) return;
+    if (!finalPrompt) return;
     const name = prompt(t('prompt_name_prompt'), t('prompt_name_default'));
     if (name) {
-      onSavePrompt(name, constructedPrompt);
+      onSavePrompt(name, finalPrompt);
     }
   };
 
   const handleSelectPrompt = (promptText: string) => {
-    setAdditionalInstructions(promptText);
-    setTemplateFields({ role: '', task: '', context: '', constraints: '' });
-    setFinalPrompt(promptText);
+    setComponents([{ id: uuidv4(), type: 'text', content: promptText }]);
     setOutput('');
     setActiveHistoryId(null);
   };
   
   const handleSelectHistory = (item: HistoryItem) => {
-    setAdditionalInstructions(item.prompt);
-    setTemplateFields({ role: '', task: '', context: '', constraints: '' });
-    setFinalPrompt(item.prompt);
+    setComponents([{ id: uuidv4(), type: 'text', content: item.prompt }]);
     setOutput(item.response);
     setActiveHistoryId(item.id);
   }
@@ -124,14 +121,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
         ) : (
           <>
             <div className="flex-grow flex flex-col gap-6">
-              <TemplateBuilder fields={templateFields} onFieldChange={setTemplateFields} t={t}>
-                <textarea
-                  value={additionalInstructions}
-                  onChange={(e) => setAdditionalInstructions(e.target.value)}
-                  className="w-full h-32 p-3 bg-background border border-border-color rounded-md text-sm text-text-main resize-none focus:ring-2 focus:ring-primary focus:outline-none"
-                  placeholder={t('prompt_placeholder')}
-                />
-              </TemplateBuilder>
+              <VisualPromptBuilder components={components} onComponentsChange={setComponents} t={t} />
               
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -170,7 +160,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                 t={t}
               />
             </div>
-            {showTester && <PromptUnitTester prompt={constructPromptFromTemplate(templateFields, additionalInstructions)} t={t} />}
+            {showTester && <PromptUnitTester prompt={finalPrompt} t={t} />}
           </>
         )}
       </div>

@@ -1,11 +1,6 @@
 import React from 'react';
 import { DashboardIcon, EditIcon, AlembicIcon, PaletteIcon } from './icons';
 
-// Admin icon component
-const AdminIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <span className={`text-lg ${className}`}>⚙️</span>
-);
-
 interface SidebarProps {
   currentView: string;
   onSetView: (view: string) => void;
@@ -17,7 +12,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetView, t }) => {
     { id: 'dashboard', label: t('sidebar_dashboard'), icon: DashboardIcon },
     { id: 'editor', label: t('sidebar_ide'), icon: EditIcon },
     { id: 'alchemist', label: t('sidebar_alchemist'), icon: AlembicIcon },
-    { id: 'admin', label: t('sidebar_admin'), icon: AdminIcon },
     { id: 'theme', label: t('sidebar_theme'), icon: PaletteIcon },
   ];
 

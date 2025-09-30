@@ -7,7 +7,6 @@ import Dashboard from './components/Dashboard';
 import PromptEditor from './components/PromptEditor';
 import ThemeCustomizer from './components/ThemeCustomizer';
 import AlchemistPage from './components/AlchemistPage';
-import PromptSyncDashboard from './src/components/admin/PromptSyncDashboard';
 import { Prompt, HistoryItem } from './types';
 import * as dataService from './services/dataService';
 
@@ -99,8 +98,6 @@ const App: React.FC = () => {
         return <ThemeCustomizer />;
       case 'alchemist':
         return <AlchemistPage t={t} onSavePrompt={handleSavePrompt} />;
-      case 'admin':
-        return <PromptSyncDashboard />;
       default:
         return <Dashboard history={history} t={t} />;
     }

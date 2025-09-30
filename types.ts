@@ -22,7 +22,7 @@ export interface TemplateFields {
 }
 
 export interface TestCase {
-  id: string;
+  id:string;
   input: string;
   expectedOutput: string;
 }
@@ -61,4 +61,17 @@ export interface AlchemistRecipe {
     description: string;
     prompt: string;
     variables: { name: string; type: 'string' | 'number'; defaultValue: string }[];
+}
+
+export type PromptComponentType = 'role' | 'task' | 'context' | 'constraints' | 'text';
+
+export interface PromptComponent {
+  id: string;
+  type: PromptComponentType;
+  content: string;
+}
+
+export interface Essence {
+    id: string;
+    text: string;
 }
