@@ -12,6 +12,7 @@ export interface HistoryItem {
   alignment_notes?: string;
   rating?: number;
   feedback?: string;
+  comparisonId?: string;
 }
 
 export interface TemplateFields {
@@ -69,6 +70,14 @@ export interface PromptComponent {
   id: string;
   type: PromptComponentType;
   content: string;
+}
+
+export interface PromptRecipe {
+    id: string;
+    name: string;
+    description: string;
+    components: PromptComponent[];
+    variables: { name: string; defaultValue: string }[];
 }
 
 export interface Essence {

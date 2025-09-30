@@ -1,7 +1,8 @@
-import { Prompt, HistoryItem } from '../types';
+import { Prompt, HistoryItem, PromptRecipe } from '../types';
 
 const PROMPTS_KEY = 'gen-spark-prompts';
 const HISTORY_KEY = 'gen-spark-history';
+const RECIPES_KEY = 'gen-spark-recipes';
 
 export const getPrompts = (): Prompt[] => {
     try {
@@ -42,5 +43,23 @@ export const saveHistory = (history: HistoryItem[]): void => {
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     } catch (e) {
         console.error("Failed to save history to localStorage", e);
+    }
+};
+
+export const getRecipes = (): PromptRecipe[] => {
+    try {
+        const data = localStorage.getItem(RECIPES_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error("Failed to load recipes from localStorage", e);
+        return [];
+    }
+}
+
+export const saveRecipes = (recipes: PromptRecipe[]): void => {
+    try {
+        localStorage.setItem(RECIPES_KEY, JSON.stringify(recipes));
+    } catch (e) {
+        console.error("Failed to save recipes to localStorage", e);
     }
 };
